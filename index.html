@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Inicio</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#0b1020" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+      <span>Padel Pass</span>
+    </a>
+
+    <nav class="nav">
+      <a class="navlink active" href="index.html">Inicio</a>
+      <a class="navlink" href="pass.html">Pase</a>
+      <a class="navlink" href="events.html">Eventos</a>
+      <a class="navlink" href="players.html">Jugadores</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="pill">Competición gamificada · Americanas y partidos</div>
+        <h1>Juega. Suma puntos. Sube niveles.</h1>
+        <p class="muted">
+          Un pase de progresión para el pádel amateur: participa en eventos, completa objetivos mensuales
+          y desbloquea recompensas cada 5 niveles.
+        </p>
+
+        <div class="hero-cta">
+          <a class="btn" href="events.html">Ver próximos eventos</a>
+          <a class="btn ghost" href="pass.html">Ver pase</a>
+        </div>
+
+        <div class="stat-grid" id="homeStats">
+          <!-- se rellena con JS -->
+        </div>
+      </div>
+
+      <div class="hero-right card glow">
+        <div class="card-header">
+          <h2>Tu progreso (demo)</h2>
+          <p class="muted small">Basado en el jugador destacado del ranking</p>
+        </div>
+
+        <div class="card-body" id="featuredProgress">
+          <!-- se rellena con JS -->
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h2>Próximos eventos</h2>
+          <p class="muted small">Americanas y partidos organizados</p>
+        </div>
+        <div class="card-body">
+          <div class="list" id="upcomingEvents"></div>
+          <div class="card-footer">
+            <a class="link" href="events.html">Ver todos →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Top jugadores</h2>
+          <p class="muted small">Por puntos totales</p>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table" id="topPlayersTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Jugador</th>
+                  <th>Nivel</th>
+                  <th>Puntos</th>
+                  <th>W-L</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="card-footer">
+            <a class="link" href="players.html">Ver ranking completo →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Objetivos mensuales (demo)</h2>
+        <p class="muted small">Se reinician cada mes y dan puntos extra</p>
+      </div>
+      <div class="card-body">
+        <div class="missions" id="monthlyMissions"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+      <span class="muted small">MVP web estática (JSON) — listo para GitHub Pages</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    window.PADEL_PAGE = "home";
+  </script>
+</body>
+</html>
