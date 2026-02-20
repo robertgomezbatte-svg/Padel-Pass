@@ -34,7 +34,7 @@ function setYear(){
 
 function initTheme(){
   const key = "pp_theme";
-  const current = localStorage.getItem(key) || "dark";
+  const current = localStorage.getItem(key) || "light";
   document.documentElement.dataset.theme = current;
 
   const btn = $("#themeToggle");
@@ -290,9 +290,9 @@ function initPass(){
             el("span", { class:"badge" }, [isUnlocked ? "Desbloqueado" : "Bloqueado"])
           ]),
           el("div", { class:"level-reward" }, [
-            el("span", { class:"badge" }, ["Recompensa"]),
-            el("span", {}, [reward])
-          ])
+  el("span", { class:"badge reward-badge" }, ["Recompensa"]),
+  el("span", { class:"reward-text" }, [reward])
+])
         ]));
       }
     }
