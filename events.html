@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Eventos</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+      <span>Padel Pass</span>
+    </a>
+
+    <nav class="nav">
+      <a class="navlink" href="index.html">Inicio</a>
+      <a class="navlink" href="pass.html">Pase</a>
+      <a class="navlink active" href="events.html">Eventos</a>
+      <a class="navlink" href="players.html">Jugadores</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div>
+        <h1>Eventos</h1>
+        <p class="muted">Americanas y partidos organizados · Pago por evento</p>
+      </div>
+      <div class="page-actions">
+        <input class="input" id="eventSearch" placeholder="Buscar por club, tipo, fecha..." />
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-body">
+        <div class="list" id="eventsList"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    window.PADEL_PAGE = "events";
+  </script>
+</body>
+</html>
