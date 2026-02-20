@@ -1,0 +1,35 @@
+[
+  {
+    "id": "e001",
+    "type": "Americana",
+    "title": "Nivel Mixto (Bronce/Plata)",
+    "datetime": "2026-02-22T19:30:00+01:00",
+    "club": "Ripollet Padel Club",
+    "location": "Ripollet",
+    "price_eur": 10,
+    "spots_total": 16,
+    "spots_left": 6
+  },
+  {
+    "id": "e002",
+    "type": "Partido",
+    "title": "Retos Oro (2vs2)",
+    "datetime": "2026-02-24T20:00:00+01:00",
+    "club": "Sabadell Indoor",
+    "location": "Sabadell",
+    "price_eur": 8,
+    "spots_total": 4,
+    "spots_left": 1
+  },
+  {
+    "id": "e003",
+    "type": "Americana",
+    "title": "Nocturna (Plata)",
+    "datetime": "2026-02-27T22:00:00+01:00",
+    "club": "Cerdanyola Padel",
+    "location": "Cerdanyola",
+    "price_eur": 12,
+    "spots_total": 16,
+    "spots_left": 12
+  }
+]
