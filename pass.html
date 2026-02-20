@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Pase</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+      <span>Padel Pass</span>
+    </a>
+
+    <nav class="nav">
+      <a class="navlink" href="index.html">Inicio</a>
+      <a class="navlink active" href="pass.html">Pase</a>
+      <a class="navlink" href="events.html">Eventos</a>
+      <a class="navlink" href="players.html">Jugadores</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div>
+        <h1>Pase de batalla</h1>
+        <p class="muted">30 niveles · Recompensa cada 5 niveles · Progresión creciente</p>
+      </div>
+      <div class="page-actions">
+        <label class="select">
+          <span class="muted small">Ver como:</span>
+          <select id="playerSelect"></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Progreso</h2>
+        <p class="muted small">Nivel, puntos y puntos necesarios para el siguiente</p>
+      </div>
+      <div class="card-body" id="passProgress"></div>
+    </section>
+
+    <section class="levels" id="levelsGrid"></section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    window.PADEL_PAGE = "pass";
+  </script>
+</body>
+</html>
