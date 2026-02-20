@@ -1,0 +1,37 @@
+[
+  { "level": 1, "requiredTotal": 0,   "reward": "" },
+  { "level": 2, "requiredTotal": 100, "reward": "" },
+  { "level": 3, "requiredTotal": 230, "reward": "" },
+  { "level": 4, "requiredTotal": 390, "reward": "" },
+  { "level": 5, "requiredTotal": 580, "reward": "Overgrips (x3)" },
+
+  { "level": 6, "requiredTotal": 820, "reward": "" },
+  { "level": 7, "requiredTotal": 1110,"reward": "" },
+  { "level": 8, "requiredTotal": 1450,"reward": "" },
+  { "level": 9, "requiredTotal": 1840,"reward": "" },
+  { "level": 10,"requiredTotal": 2280,"reward": "Camiseta técnica Padel Pass" },
+
+  { "level": 11,"requiredTotal": 2770,"reward": "" },
+  { "level": 12,"requiredTotal": 3310,"reward": "" },
+  { "level": 13,"requiredTotal": 3900,"reward": "" },
+  { "level": 14,"requiredTotal": 4540,"reward": "" },
+  { "level": 15,"requiredTotal": 5230,"reward": "Inscripción gratis a americana premium" },
+
+  { "level": 16,"requiredTotal": 5970,"reward": "" },
+  { "level": 17,"requiredTotal": 6760,"reward": "" },
+  { "level": 18,"requiredTotal": 7600,"reward": "" },
+  { "level": 19,"requiredTotal": 8490,"reward": "" },
+  { "level": 20,"requiredTotal": 9430,"reward": "Sudadera oficial Padel Pass" },
+
+  { "level": 21,"requiredTotal": 10420,"reward": "" },
+  { "level": 22,"requiredTotal": 11460,"reward": "" },
+  { "level": 23,"requiredTotal": 12550,"reward": "" },
+  { "level": 24,"requiredTotal": 13690,"reward": "" },
+  { "level": 25,"requiredTotal": 14880,"reward": "Paletero Padel Pass" },
+
+  { "level": 26,"requiredTotal": 16120,"reward": "" },
+  { "level": 27,"requiredTotal": 17410,"reward": "" },
+  { "level": 28,"requiredTotal": 18750,"reward": "" },
+  { "level": 29,"requiredTotal": 20140,"reward": "" },
+  { "level": 30,"requiredTotal": 21580,"reward": "👑 Nivel 30: Pala + Perfil destacado" }
+]
