@@ -1,0 +1,24 @@
+[
+  {
+    "id": "m001",
+    "type": "Partido",
+    "datetime": "2026-02-18T20:00:00+01:00",
+    "club": "Ripollet Padel Club",
+    "players": ["p001", "p002"],
+    "winner": "p001",
+    "score": "6-3 6-4",
+    "pointsEarned": { "p001": 25, "p002": 12 },
+    "note": "Victoria sólida"
+  },
+  {
+    "id": "m002",
+    "type": "Americana",
+    "datetime": "2026-02-16T19:30:00+01:00",
+    "club": "Sabadell Indoor",
+    "players": ["p001", "p003"],
+    "winner": "p003",
+    "score": "4-6 6-2 6-4",
+    "pointsEarned": { "p001": 10, "p003": 30 },
+    "note": "Remontada"
+  }
+]
