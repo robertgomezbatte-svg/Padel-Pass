@@ -462,6 +462,21 @@ function initPlayerProfile(){
       missions.appendChild(missionCard(m, done));
     }
   }
+     // LOGROS (10 huecos) + 1 medalla en Robert
+  const ag = $("#achievementsGrid");
+  if (ag){
+    ag.innerHTML = "";
+    const isRobert = String(p.id).toLowerCase() === "robert" || String(p.name).toLowerCase().includes("robert");
+
+    for (let i = 0; i < 10; i++){
+      const slot = el("div", { class: "achievement-slot" });
+      if (isRobert && i === 0){
+        slot.classList.add("filled");
+        slot.textContent = "🌞";
+      }
+      ag.appendChild(slot);
+    }
+  }
 
   const list = $("#playerMatches");
   if (list){
