@@ -1,0 +1,11 @@
+{
+  "brandName": "Padel Pass",
+  "monthlyMissions": [
+    { "id": "m10", "title": "Juega 10 partidos", "desc": "Participa en 10 partidos o americanas durante el mes.", "points": 50 },
+    { "id": "w5", "title": "Gana 5 partidos", "desc": "Consigue 5 victorias oficiales este mes.", "points": 40 },
+    { "id": "bagel", "title": "Gana 6-0", "desc": "Logra un 6-0 en un set en partido oficial.", "points": 30 },
+    { "id": "mix5", "title": "Juega con 5 personas distintas", "desc": "En americanas o partidos, rota de compañeros.", "points": 40 },
+    { "id": "invite", "title": "Trae a un jugador nuevo", "desc": "Que juegue su primer evento Padel Pass.", "points": 60 },
+    { "id": "streak3", "title": "Racha de 3 victorias", "desc": "Gana 3 partidos seguidos en el mes.", "points": 45 }
+  ]
+}
