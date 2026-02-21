@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Registro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.png" alt="Padel Pass" class="logo" />
+      <span>Padel Pass</span>
+    </a>
+
+    <nav class="nav">
+      <a class="navlink" href="index.html">Inicio</a>
+      <a class="navlink" href="pass.html">Pase</a>
+      <a class="navlink" href="events.html">Eventos</a>
+      <a class="navlink" href="players.html">Jugadores</a>
+      <a class="navlink active" href="register.html">Registro</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div>
+        <h1>Registro de jugador</h1>
+        <p class="muted">Se guarda en este dispositivo (demo). Luego podrás exportarlo a JSON.</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn ghost" href="players.html">Ver jugadores →</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Datos</h2>
+        <p class="muted small">Nombre obligatorio. El resto opcional.</p>
+      </div>
+
+      <div class="card-body">
+        <form id="registerForm" class="form-grid">
+          <div>
+            <div class="muted small">Nombre*</div>
+            <input class="input" name="name" required maxlength="40" placeholder="Ej: Robert" />
+          </div>
+
+          <div>
+            <div class="muted small">Club</div>
+            <input class="input" name="club" maxlength="40" placeholder="Ej: Can Bassa" />
+          </div>
+
+          <div>
+            <div class="muted small">Contacto (opcional)</div>
+            <input class="input" name="contact" maxlength="60" placeholder="Instagram / WhatsApp / email" />
+          </div>
+
+          <div>
+            <div class="muted small">ID (auto)</div>
+            <input class="input" name="idPreview" readonly />
+          </div>
+
+          <div style="grid-column: 1 / -1; display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            <button class="btn" type="submit">Crear jugador</button>
+            <button class="btn ghost" id="exportLocalPlayers" type="button">Exportar jugadores (JSON)</button>
+            <button class="btn ghost" id="clearLocalPlayers" type="button">Borrar jugadores locales</button>
+          </div>
+
+          <div class="muted small" id="registerMsg" style="grid-column:1/-1;"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    window.PADEL_PAGE = "register";
+  </script>
+</body>
+</html>
