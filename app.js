@@ -645,10 +645,15 @@ async function initRegister(){
       monthlyDone: []
     };
 
-    await ensureAuth();
-await setDoc(doc(db, "players", newPlayer.id), newPlayer);
-await loadAllData();
-    if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
+    try {
+  await ensureAuth();
+  await setDoc(doc(db, "players", newPlayer.id), newPlayer);
+  await loadAllData();
+  if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
+} catch (err) {
+  console.error(err);
+  if (msg) msg.textContent = `❌ Error guardando en Firebase: ${err?.code || err?.message || err}`;
+}
 
     // limpiar campos (menos idPreview)
     form.reset();
