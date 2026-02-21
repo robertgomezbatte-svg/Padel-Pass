@@ -699,7 +699,6 @@ async function fetchPlayersFromFirestore(){
 }
 
 async function initAdmin(){
-  // Auth anónimo para poder operar
   await ensureAuth();
 
   const keyInput = $("#adminKeyInput");
@@ -727,13 +726,11 @@ async function initAdmin(){
           el("button", { class:"btn ghost", type:"button", "data-del": p.id }, ["Borrar"]),
         ]),
       ]);
-
       tbody.appendChild(tr);
     });
 
-    // listeners
     tbody.querySelectorAll('button[data-id]').forEach(btn => {
-      btn.addEventListener("click", async () => {
+      btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-id");
         const p = (DATA.players || []).find(x => x.id === id);
         if (!p) return;
@@ -760,7 +757,6 @@ async function initAdmin(){
         if (!ok) return;
 
         try {
-          // delete requiere adminKey por rules → hacemos update previo con adminKey + delete
           await updateDoc(doc(db, "players", id), { adminKey: key });
           await deleteDoc(doc(db, "players", id));
           msg.textContent = "✅ Jugador borrado.";
@@ -793,14 +789,20 @@ async function initAdmin(){
       adminKey: key,
     };
 
-try {
-  await updateDoc(doc(db, "players", id), payload);
+    try {
+      await updateDoc(doc(db, "players", id), payload);
+      await updateDoc(doc(db, "players", id), { adminKey: deleteField() });
 
-  // borrar el campo adminKey (no dejar rastro)
-  await updateDoc(doc(db, "players", id), { adminKey: deleteField() });
+      editMsg.textContent = "✅ Guardado.";
+      await loadTable();
+    } catch (err) {
+      console.error(err);
+      editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
+    }
+  });
 
-  editMsg.textContent = "✅ Guardado.";
   await loadTable();
+}
 
 } catch (err) {
   console.error(err);
