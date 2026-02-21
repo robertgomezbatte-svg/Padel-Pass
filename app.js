@@ -837,19 +837,13 @@ async function initAdmin() {
 
   $("#adminReload")?.addEventListener("click", loadTable);
 
-  form?.addEventListener("submit", async (e) => {
+   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const key = getKey();
-    if (!key) {
-      if (editMsg) editMsg.textContent = "❌ Pon la clave admin.";
-      return;
-    }
+    if (!key) { editMsg.textContent = "❌ Pon la clave admin."; return; }
 
     const id = String(form.id.value || "").trim();
-    if (!id) {
-      if (editMsg) editMsg.textContent = "❌ No hay jugador seleccionado.";
-      return;
-    }
+    if (!id) { editMsg.textContent = "❌ No hay jugador seleccionado."; return; }
 
     const payload = {
       name: String(form.name.value || "").trim(),
@@ -865,11 +859,11 @@ async function initAdmin() {
       await updateDoc(doc(db, "players", id), payload);
       await updateDoc(doc(db, "players", id), { adminKey: deleteField() });
 
-      if (editMsg) editMsg.textContent = "✅ Guardado.";
+      editMsg.textContent = "✅ Guardado.";
       await loadTable();
     } catch (err) {
       console.error(err);
-      if (editMsg) editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
+      editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
     }
   });
 
