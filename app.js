@@ -645,17 +645,9 @@ async function initRegister(){
       monthlyDone: []
     };
 
-    const locals = getLocalPlayers();
-    // evita duplicar por nombre exacto
-    const dup = locals.some(p => (p.name || "").trim().toLowerCase() === name.toLowerCase());
-    if (dup){
-      if (msg) msg.textContent = "⚠️ Ya existe un jugador local con ese nombre (en este dispositivo).";
-      return;
-    }
-
     await ensureAuth();
 await setDoc(doc(db, "players", newPlayer.id), newPlayer);
-DATA.players = await fetchPlayersFromFirestore();
+await loadAllData();
     if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
 
     // limpiar campos (menos idPreview)
