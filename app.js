@@ -12,12 +12,13 @@ const $$ = (q) => Array.from(document.querySelectorAll(q));
 const DATA = {};
 // ===== Firebase config (PEGA EL TUYO AQUÍ) =====
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyBWSoiw31QAgk4oRuhFnGN2IZKKW7RwKdY",
+  authDomain: "padel-pass-2782b.firebaseapp.com",
+  projectId: "padel-pass-2782b",
+  storageBucket: "padel-pass-2782b.firebasestorage.app",
+  messagingSenderId: "1073609889878",
+  appId: "1:1073609889878:web:2f2edaaf530796a65843f7",
+  measurementId: "G-RB0XNVGM4D"
 };
 
 const fbApp = initializeApp(firebaseConfig);
