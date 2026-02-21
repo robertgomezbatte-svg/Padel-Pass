@@ -45,29 +45,7 @@ async function boot(){
   setYear();
   initTheme();
 
-  async function loadAllData(){
-  const files = ["config", "levels", "events", "matches"];
-  for (const f of files){
-    DATA[f] = await fetchJSON(`data/${f}.json`);
-  }
-
-  // Cargar players base
-  const basePlayers = await fetchJSON("data/players.json");
-
-  // Intentar cargar players de Firebase
-  let cloudPlayers = [];
-  try {
-    cloudPlayers = await fetchPlayersFromFirestore();
-  } catch (e) {
-    console.warn("Firestore no disponible, usando solo JSON local.");
-  }
-
-  const map = new Map();
-  basePlayers.forEach(p => map.set(p.id, p));
-  cloudPlayers.forEach(p => map.set(p.id, p));
-
-  DATA.players = Array.from(map.values());
-}
+  await loadAllData();
 
   const page = window.PADEL_PAGE || "home";
   if (pages[page]) pages[page]();
@@ -99,6 +77,27 @@ async function fetchJSON(path){
   return res.json();
 }
 
+async function loadAllData(){
+  const files = ["config", "levels", "events", "matches"];
+  for (const f of files){
+    DATA[f] = await fetchJSON(`data/${f}.json`);
+  }
+
+  const basePlayers = await fetchJSON("data/players.json");
+
+  let cloudPlayers = [];
+  try {
+    cloudPlayers = await fetchPlayersFromFirestore();
+  } catch (e) {
+    console.warn("Firestore no disponible, usando solo JSON local.", e);
+  }
+
+  const map = new Map();
+  basePlayers.forEach(p => map.set(p.id, p));
+  cloudPlayers.forEach(p => map.set(p.id, p));
+
+  DATA.players = Array.from(map.values());
+}
 /* ---------- helpers de negocio ---------- */
 
 function pointsToLevel(levels, points){
@@ -172,7 +171,7 @@ function progressBar(pct){
 
 function initHome(){
    const { events, levels, config } = DATA;
-  const players = DATA.players;
+  const players = DATA.players || [];
 
   // Stats
   const totalPlayers = players.length;
@@ -384,7 +383,7 @@ function eventItem(e){
 
 function initPlayers(){
     const { levels } = DATA;
-  const players = DATA.players;
+ const players = DATA.players || [];
 
   const tbody = $("#playersTable tbody");
   const search = $("#playerSearch");
@@ -445,7 +444,7 @@ function playerLink(p){
 
 function initPlayerProfile(){
     const { levels, matches, config } = DATA;
-  const players = DATA.players;
+  const players = DATA.players || [];
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || players[0]?.id;
@@ -656,7 +655,7 @@ async function initRegister(){
 
     await ensureAuth();
 await setDoc(doc(db, "players", newPlayer.id), newPlayer);
-
+DATA.players = await fetchPlayersFromFirestore();
     if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
 
     // limpiar campos (menos idPreview)
