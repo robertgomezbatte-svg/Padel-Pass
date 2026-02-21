@@ -84,15 +84,25 @@ async function loadAllData(){
     DATA[f] = await fetchJSON(`data/${f}.json`);
   }
 
-  const basePlayers = await fetchJSON("data/players.json");
+  // Base desde JSON (para que nunca se quede vacío)
+  let basePlayers = [];
+  try {
+    basePlayers = await fetchJSON("data/players.json");
+  } catch (e) {
+    console.warn("No se pudo cargar data/players.json", e);
+    basePlayers = [];
+  }
 
+  // Cloud desde Firestore
   let cloudPlayers = [];
   try {
     cloudPlayers = await fetchPlayersFromFirestore();
   } catch (e) {
-    console.warn("Firestore no disponible, usando solo JSON local.", e);
+    console.warn("No se pudo leer Firestore players", e);
+    cloudPlayers = [];
   }
 
+  // Merge por id (cloud pisa base)
   const map = new Map();
   basePlayers.forEach(p => map.set(p.id, p));
   cloudPlayers.forEach(p => map.set(p.id, p));
@@ -264,7 +274,8 @@ function statCard(label, value){
 /* ---------- PASS ---------- */
 
 function initPass(){
-  const { players, levels } = DATA;
+  const players = DATA.players || [];
+const levels = DATA.levels;
 
   const select = $("#playerSelect");
   if (select){
