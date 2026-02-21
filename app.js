@@ -2,11 +2,33 @@
    - Carga JSON de /data
    - Renderiza páginas: home, pass, events, players, player
 */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 
 const DATA = {};
+// ===== Firebase config (PEGA EL TUYO AQUÍ) =====
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID",
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+
+async function ensureAuth(){
+  if (auth.currentUser) return auth.currentUser;
+  const cred = await signInAnonymously(auth);
+  return cred.user;
+}
 const pages = {
   home: initHome,
   pass: initPass,
@@ -22,7 +44,29 @@ async function boot(){
   setYear();
   initTheme();
 
-  await loadAllData();
+  async function loadAllData(){
+  const files = ["config", "levels", "events", "matches"];
+  for (const f of files){
+    DATA[f] = await fetchJSON(`data/${f}.json`);
+  }
+
+  // players base (seed) desde JSON
+  const basePlayers = await fetchJSON("data/players.json");
+
+  // players cloud desde Firestore
+  let cloudPlayers = [];
+  try {
+    cloudPlayers = await fetchPlayersFromFirestore();
+  } catch (e) {
+    console.warn("No se pudo leer Firestore players:", e);
+  }
+
+  // merge por id (cloud gana)
+  const map = new Map();
+  basePlayers.forEach(p => map.set(p.id, p));
+  cloudPlayers.forEach(p => map.set(p.id, p));
+  DATA.players = Array.from(map.values());
+}
 
   const page = window.PADEL_PAGE || "home";
   if (pages[page]) pages[page]();
@@ -571,7 +615,7 @@ function mergePlayersWithLocal(players){
 
 /* ---------- REGISTER ---------- */
 
-function initRegister(){
+async function initRegister(){
   // genera preview ID según nombre
   const form = $("#registerForm");
   const msg = $("#registerMsg");
@@ -587,7 +631,7 @@ function initRegister(){
   nameInput?.addEventListener("input", updatePreview);
   updatePreview();
 
-  form?.addEventListener("submit", (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const fd = new FormData(form);
     const name = String(fd.get("name") || "").trim();
@@ -621,8 +665,8 @@ function initRegister(){
       return;
     }
 
-    locals.push(newPlayer);
-    setLocalPlayers(locals);
+    await ensureAuth();
+await setDoc(doc(db, "players", newPlayer.id), newPlayer);
 
     if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
 
@@ -648,4 +692,11 @@ function initRegister(){
     localStorage.removeItem(LS_PLAYERS_KEY);
     if (msg) msg.textContent = "🗑️ Jugadores locales borrados.";
   });
+}
+
+async function fetchPlayersFromFirestore(){
+  const snap = await getDocs(collection(db, "players"));
+  const out = [];
+  snap.forEach(d => out.push(d.data()));
+  return out;
 }
