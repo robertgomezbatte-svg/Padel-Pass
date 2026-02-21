@@ -51,21 +51,21 @@ async function boot(){
     DATA[f] = await fetchJSON(`data/${f}.json`);
   }
 
-  // players base (seed) desde JSON
+  // Cargar players base
   const basePlayers = await fetchJSON("data/players.json");
 
-  // players cloud desde Firestore
+  // Intentar cargar players de Firebase
   let cloudPlayers = [];
   try {
     cloudPlayers = await fetchPlayersFromFirestore();
   } catch (e) {
-    console.warn("No se pudo leer Firestore players:", e);
+    console.warn("Firestore no disponible, usando solo JSON local.");
   }
 
-  // merge por id (cloud gana)
   const map = new Map();
   basePlayers.forEach(p => map.set(p.id, p));
   cloudPlayers.forEach(p => map.set(p.id, p));
+
   DATA.players = Array.from(map.values());
 }
 
@@ -91,13 +91,6 @@ function initTheme(){
     document.documentElement.dataset.theme = next;
     localStorage.setItem(key, next);
   });
-}
-
-async function loadAllData(){
-  const files = ["config", "levels", "players", "events", "matches"];
-  for (const f of files){
-    DATA[f] = await fetchJSON(`data/${f}.json`);
-  }
 }
 
 async function fetchJSON(path){
@@ -179,7 +172,7 @@ function progressBar(pct){
 
 function initHome(){
    const { events, levels, config } = DATA;
-  const players = mergePlayersWithLocal(DATA.players);
+  const players = DATA.players;
 
   // Stats
   const totalPlayers = players.length;
@@ -391,7 +384,7 @@ function eventItem(e){
 
 function initPlayers(){
     const { levels } = DATA;
-  const players = mergePlayersWithLocal(DATA.players);
+  const players = DATA.players;
 
   const tbody = $("#playersTable tbody");
   const search = $("#playerSearch");
@@ -452,7 +445,7 @@ function playerLink(p){
 
 function initPlayerProfile(){
     const { levels, matches, config } = DATA;
-  const players = mergePlayersWithLocal(DATA.players);
+  const players = DATA.players;
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || players[0]?.id;
@@ -607,12 +600,7 @@ function slugifyId(name){
   return base ? `${base}-${rand}` : `player-${rand}`;
 }
 
-function mergePlayersWithLocal(players){
-  const locals = getLocalPlayers();
-  const used = new Set(players.map(p => p.id));
-  const safeLocals = locals.filter(p => p && p.id && !used.has(p.id));
-  return players.concat(safeLocals);
-}
+
 
 /* ---------- REGISTER ---------- */
 
