@@ -3,8 +3,8 @@
    - Renderiza páginas: home, pass, events, players, player
 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, updateDoc, deleteField }
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
@@ -37,6 +37,7 @@ const pages = {
   players: initPlayers,
   player: initPlayerProfile,
   register: initRegister,
+  admin: initAdmin,
 };
 
 boot();
@@ -684,4 +685,116 @@ async function fetchPlayersFromFirestore(){
   const out = [];
   snap.forEach(d => out.push(d.data()));
   return out;
+}
+
+async function initAdmin(){
+  // Auth anónimo para poder operar
+  await ensureAuth();
+
+  const keyInput = $("#adminKeyInput");
+  const msg = $("#adminMsg");
+  const tbody = $("#adminPlayersTable tbody");
+  const form = $("#adminEditForm");
+  const editMsg = $("#adminEditMsg");
+
+  const getKey = () => String(keyInput?.value || "").trim();
+
+  async function loadTable(){
+    await loadAllData();
+    const players = (DATA.players || []).slice().sort((a,b)=> (b.points||0)-(a.points||0));
+
+    tbody.innerHTML = "";
+    players.forEach(p => {
+      const tr = el("tr", {}, [
+        el("td", {}, [p.name || "—"]),
+        el("td", {}, [p.id]),
+        el("td", {}, [String(p.points ?? 0)]),
+        el("td", {}, [`${p.wins ?? 0}-${p.losses ?? 0}`]),
+        el("td", {}, [
+          el("button", { class:"btn ghost", type:"button", "data-id": p.id }, ["Editar"]),
+          el("span", { style:"display:inline-block;width:8px" }, [""]),
+          el("button", { class:"btn ghost", type:"button", "data-del": p.id }, ["Borrar"]),
+        ]),
+      ]);
+
+      tbody.appendChild(tr);
+    });
+
+    // listeners
+    tbody.querySelectorAll('button[data-id]').forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const p = (DATA.players || []).find(x => x.id === id);
+        if (!p) return;
+
+        form.name.value = p.name || "";
+        form.id.value = p.id || "";
+        form.club.value = p.club || "";
+        form.contact.value = p.contact || "";
+        form.points.value = p.points ?? 0;
+        form.wins.value = p.wins ?? 0;
+        form.losses.value = p.losses ?? 0;
+
+        editMsg.textContent = `Editando: ${p.name}`;
+      });
+    });
+
+    tbody.querySelectorAll('button[data-del]').forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-del");
+        const key = getKey();
+        if (!key) { msg.textContent = "❌ Pon la clave admin."; return; }
+
+        const ok = confirm("¿Seguro que quieres borrar este jugador?");
+        if (!ok) return;
+
+        try {
+          // delete requiere adminKey por rules → hacemos update previo con adminKey + delete
+          await updateDoc(doc(db, "players", id), { adminKey: key });
+          await deleteDoc(doc(db, "players", id));
+          msg.textContent = "✅ Jugador borrado.";
+          await loadTable();
+        } catch (err){
+          console.error(err);
+          msg.textContent = `❌ Error borrando: ${err?.code || err?.message || err}`;
+        }
+      });
+    });
+  }
+
+  $("#adminReload")?.addEventListener("click", loadTable);
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const key = getKey();
+    if (!key) { editMsg.textContent = "❌ Pon la clave admin."; return; }
+
+    const id = String(form.id.value || "").trim();
+    if (!id) { editMsg.textContent = "❌ No hay jugador seleccionado."; return; }
+
+    const payload = {
+      name: String(form.name.value || "").trim(),
+      club: String(form.club.value || "").trim(),
+      contact: String(form.contact.value || "").trim(),
+      points: Number(form.points.value || 0),
+      wins: Number(form.wins.value || 0),
+      losses: Number(form.losses.value || 0),
+      adminKey: key,
+    };
+
+try {
+  await updateDoc(doc(db, "players", id), payload);
+
+  // borrar el campo adminKey (no dejar rastro)
+  await updateDoc(doc(db, "players", id), { adminKey: deleteField() });
+
+  editMsg.textContent = "✅ Guardado.";
+  await loadTable();
+
+} catch (err) {
+  console.error(err);
+  editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
+}
+
+  await loadTable();
 }
