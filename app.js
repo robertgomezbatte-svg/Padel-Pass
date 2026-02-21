@@ -1,15 +1,32 @@
 /* Padel Pass MVP (web estática)
    - Carga JSON de /data
-   - Renderiza páginas: home, pass, events, players, player
+   - Renderiza páginas: home, pass, events, players, player, register, admin
 */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, updateDoc, deleteField }
-from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDocs,
+  collection,
+  deleteDoc,
+  updateDoc,
+  deleteField,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+// ✅ FALTABA ESTO (Auth)
+import {
+  getAuth,
+  signInAnonymously,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 
 const DATA = {};
+
 // ===== Firebase config (PEGA EL TUYO AQUÍ) =====
 const firebaseConfig = {
   apiKey: "AIzaSyBWSoiw31QAgk4oRuhFnGN2IZKKW7RwKdY",
@@ -18,18 +35,19 @@ const firebaseConfig = {
   storageBucket: "padel-pass-2782b.firebasestorage.app",
   messagingSenderId: "1073609889878",
   appId: "1:1073609889878:web:2f2edaaf530796a65843f7",
-  measurementId: "G-RB0XNVGM4D"
+  measurementId: "G-RB0XNVGM4D",
 };
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 const auth = getAuth(fbApp);
 
-async function ensureAuth(){
+async function ensureAuth() {
   if (auth.currentUser) return auth.currentUser;
   const cred = await signInAnonymously(auth);
   return cred.user;
 }
+
 const pages = {
   home: initHome,
   pass: initPass,
@@ -42,7 +60,7 @@ const pages = {
 
 boot();
 
-async function boot(){
+async function boot() {
   setYear();
   initTheme();
 
@@ -52,12 +70,12 @@ async function boot(){
   if (pages[page]) pages[page]();
 }
 
-function setYear(){
+function setYear() {
   const el = $("#year");
   if (el) el.textContent = new Date().getFullYear();
 }
 
-function initTheme(){
+function initTheme() {
   const key = "pp_theme";
   const current = localStorage.getItem(key) || "light";
   document.documentElement.dataset.theme = current;
@@ -66,21 +84,22 @@ function initTheme(){
   if (!btn) return;
 
   btn.addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    const next =
+      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     localStorage.setItem(key, next);
   });
 }
 
-async function fetchJSON(path){
+async function fetchJSON(path) {
   const res = await fetch(path, { cache: "no-store" });
   if (!res.ok) throw new Error(`No se pudo cargar ${path}`);
   return res.json();
 }
 
-async function loadAllData(){
+async function loadAllData() {
   const files = ["config", "levels", "events", "matches"];
-  for (const f of files){
+  for (const f of files) {
     DATA[f] = await fetchJSON(`data/${f}.json`);
   }
 
@@ -104,27 +123,27 @@ async function loadAllData(){
 
   // Merge por id (cloud pisa base)
   const map = new Map();
-  basePlayers.forEach(p => map.set(p.id, p));
-  cloudPlayers.forEach(p => map.set(p.id, p));
+  basePlayers.forEach((p) => map.set(p.id, p));
+  cloudPlayers.forEach((p) => map.set(p.id, p));
 
   DATA.players = Array.from(map.values());
 }
+
 /* ---------- helpers de negocio ---------- */
 
-function pointsToLevel(levels, points){
+function pointsToLevel(levels, points) {
   // levels: array of {level, requiredTotal}
-  // Retorna nivel actual (1..30) según puntos totales
   let lvl = 1;
-  for (const row of levels){
+  for (const row of levels) {
     if (points >= row.requiredTotal) lvl = row.level;
   }
   return lvl;
 }
 
-function nextLevelInfo(levels, points){
+function nextLevelInfo(levels, points) {
   const current = pointsToLevel(levels, points);
-  const currentRow = levels.find(x => x.level === current);
-  const nextRow = levels.find(x => x.level === current + 1);
+  const currentRow = levels.find((x) => x.level === current);
+  const nextRow = levels.find((x) => x.level === current + 1);
 
   const currentFloor = currentRow ? currentRow.requiredTotal : 0;
   const nextTarget = nextRow ? nextRow.requiredTotal : currentFloor;
@@ -138,50 +157,58 @@ function nextLevelInfo(levels, points){
     currentFloor,
     nextTarget,
     progress,
-    isMax: !nextRow
+    isMax: !nextRow,
   };
 }
 
-function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
 
-function winrate(p){
+function winrate(p) {
   const total = (p.wins || 0) + (p.losses || 0);
   if (!total) return 0;
   return (p.wins / total) * 100;
 }
 
-function formatDateTime(iso){
+function formatDateTime(iso) {
   const d = new Date(iso);
-  return d.toLocaleString("es-ES", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+  return d.toLocaleString("es-ES", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 /* ---------- render UI ---------- */
 
-function el(tag, attrs={}, children=[]){
+function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
-  for (const [k,v] of Object.entries(attrs)){
+  for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") node.className = v;
     else if (k === "html") node.innerHTML = v;
     else node.setAttribute(k, v);
   }
-  for (const c of children){
+  for (const c of children) {
     node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
   }
   return node;
 }
 
-function progressBar(pct){
-  const wrap = el("div", { class:"progress" });
+function progressBar(pct) {
+  const wrap = el("div", { class: "progress" });
   const bar = el("div");
-  bar.style.width = `${Math.round(pct*100)}%`;
+  bar.style.width = `${Math.round(pct * 100)}%`;
   wrap.appendChild(bar);
   return wrap;
 }
 
 /* ---------- HOME ---------- */
 
-function initHome(){
-   const { events, levels, config } = DATA;
+function initHome() {
+  const { events, levels, config } = DATA;
   const players = DATA.players || [];
 
   // Stats
@@ -190,7 +217,7 @@ function initHome(){
   const totalMatches = DATA.matches.length;
 
   const statsEl = $("#homeStats");
-  if (statsEl){
+  if (statsEl) {
     statsEl.innerHTML = "";
     statsEl.appendChild(statCard("JUGADORES", totalPlayers));
     statsEl.appendChild(statCard("EVENTOS", totalEvents));
@@ -200,11 +227,11 @@ function initHome(){
   // Upcoming events
   const upcoming = events
     .slice()
-    .sort((a,b)=> new Date(a.datetime) - new Date(b.datetime))
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
     .slice(0, 4);
 
   const upEl = $("#upcomingEvents");
-  if (upEl){
+  if (upEl) {
     upEl.innerHTML = "";
     for (const e of upcoming) upEl.appendChild(eventItem(e));
   }
@@ -212,20 +239,20 @@ function initHome(){
   // Top players
   const top = players
     .slice()
-    .sort((a,b)=> b.points - a.points)
+    .sort((a, b) => (b.points || 0) - (a.points || 0))
     .slice(0, 6);
 
   const tbody = $("#topPlayersTable tbody");
-  if (tbody){
+  if (tbody) {
     tbody.innerHTML = "";
     top.forEach((p, idx) => {
-      const lvl = pointsToLevel(levels, p.points);
+      const lvl = pointsToLevel(levels, p.points || 0);
       const tr = el("tr", {}, [
-        el("td", {}, [String(idx+1)]),
+        el("td", {}, [String(idx + 1)]),
         el("td", {}, [playerLink(p)]),
         el("td", {}, [String(lvl)]),
-        el("td", {}, [String(p.points)]),
-        el("td", {}, [`${p.wins}-${p.losses}`]),
+        el("td", {}, [String(p.points || 0)]),
+        el("td", {}, [`${p.wins || 0}-${p.losses || 0}`]),
       ]);
       tbody.appendChild(tr);
     });
@@ -234,56 +261,66 @@ function initHome(){
   // Featured progress (el #1)
   const featured = top[0] || players[0];
   const fp = $("#featuredProgress");
-  if (fp && featured){
-    const info = nextLevelInfo(levels, featured.points);
+  if (fp && featured) {
+    const info = nextLevelInfo(levels, featured.points || 0);
     fp.innerHTML = "";
-    fp.appendChild(el("div", { class:"kpi-row" }, [
-      kpi("JUGADOR", featured.name),
-      kpi("NIVEL", String(info.current)),
-      kpi("PUNTOS", String(featured.points)),
-    ]));
-    fp.appendChild(el("div", { style:"height:12px" }));
-    fp.appendChild(el("div", { class:"muted small" }, [
-      info.isMax
-        ? "Máximo nivel alcanzado."
-        : `Siguiente nivel: ${info.current + 1} · Objetivo: ${info.nextTarget} pts`
-    ]));
-    fp.appendChild(el("div", { style:"height:10px" }));
+    fp.appendChild(
+      el("div", { class: "kpi-row" }, [
+        kpi("JUGADOR", featured.name),
+        kpi("NIVEL", String(info.current)),
+        kpi("PUNTOS", String(featured.points || 0)),
+      ])
+    );
+    fp.appendChild(el("div", { style: "height:12px" }));
+    fp.appendChild(
+      el("div", { class: "muted small" }, [
+        info.isMax
+          ? "Máximo nivel alcanzado."
+          : `Siguiente nivel: ${info.current + 1} · Objetivo: ${info.nextTarget} pts`,
+      ])
+    );
+    fp.appendChild(el("div", { style: "height:10px" }));
     fp.appendChild(progressBar(info.progress));
-    fp.appendChild(el("div", { style:"height:12px" }));
-    fp.appendChild(el("a", { class:"btn ghost", href:`player.html?id=${encodeURIComponent(featured.id)}` }, ["Ver perfil →"]));
+    fp.appendChild(el("div", { style: "height:12px" }));
+    fp.appendChild(
+      el(
+        "a",
+        { class: "btn ghost", href: `player.html?id=${encodeURIComponent(featured.id)}` },
+        ["Ver perfil →"]
+      )
+    );
   }
 
-  // Monthly missions (demo del config)
+  // Monthly missions
   const missionsEl = $("#monthlyMissions");
-  if (missionsEl){
+  if (missionsEl) {
     missionsEl.innerHTML = "";
-    for (const m of config.monthlyMissions){
+    for (const m of config.monthlyMissions) {
       missionsEl.appendChild(missionCard(m, false));
     }
   }
 }
 
-function statCard(label, value){
-  return el("div", { class:"stat" }, [
-    el("div", { class:"k" }, [label]),
-    el("div", { class:"v" }, [String(value)])
+function statCard(label, value) {
+  return el("div", { class: "stat" }, [
+    el("div", { class: "k" }, [label]),
+    el("div", { class: "v" }, [String(value)]),
   ]);
 }
 
 /* ---------- PASS ---------- */
 
-function initPass(){
+function initPass() {
   const players = DATA.players || [];
-const levels = DATA.levels;
+  const levels = DATA.levels;
 
   const select = $("#playerSelect");
-  if (select){
+  if (select) {
     select.innerHTML = "";
     players
       .slice()
-      .sort((a,b)=> b.points - a.points)
-      .forEach(p => {
+      .sort((a, b) => (b.points || 0) - (a.points || 0))
+      .forEach((p) => {
         select.appendChild(el("option", { value: p.id }, [p.name]));
       });
 
@@ -295,56 +332,62 @@ const levels = DATA.levels;
     renderPassFor(players[0]?.id);
   }
 
-  function renderPassFor(playerId){
-    const p = players.find(x => x.id === playerId) || players[0];
-    const info = nextLevelInfo(levels, p.points);
+  function renderPassFor(playerId) {
+    const p = players.find((x) => x.id === playerId) || players[0];
+    if (!p) return;
+
+    const info = nextLevelInfo(levels, p.points || 0);
 
     const progressEl = $("#passProgress");
-    if (progressEl){
+    if (progressEl) {
       progressEl.innerHTML = "";
-      progressEl.appendChild(el("div", { class:"kpi-row" }, [
-        kpi("JUGADOR", p.name),
-        kpi("NIVEL", String(info.current)),
-        kpi("PUNTOS", String(p.points)),
-      ]));
+      progressEl.appendChild(
+        el("div", { class: "kpi-row" }, [
+          kpi("JUGADOR", p.name),
+          kpi("NIVEL", String(info.current)),
+          kpi("PUNTOS", String(p.points || 0)),
+        ])
+      );
 
-      progressEl.appendChild(el("div", { style:"height:12px" }));
-      progressEl.appendChild(el("div", { class:"muted small" }, [
-        info.isMax
-          ? "Máximo nivel alcanzado."
-          : `Siguiente nivel: ${info.current + 1} · Te faltan ${info.nextTarget - p.points} pts`
-      ]));
-      progressEl.appendChild(el("div", { style:"height:10px" }));
+      progressEl.appendChild(el("div", { style: "height:12px" }));
+      progressEl.appendChild(
+        el("div", { class: "muted small" }, [
+          info.isMax
+            ? "Máximo nivel alcanzado."
+            : `Siguiente nivel: ${info.current + 1} · Te faltan ${info.nextTarget - (p.points || 0)} pts`,
+        ])
+      );
+      progressEl.appendChild(el("div", { style: "height:10px" }));
       progressEl.appendChild(progressBar(info.progress));
     }
 
     const grid = $("#levelsGrid");
-    if (grid){
+    if (grid) {
       grid.innerHTML = "";
-      for (const row of levels){
-        const isUnlocked = p.points >= row.requiredTotal;
+      for (const row of levels) {
+        const isUnlocked = (p.points || 0) >= row.requiredTotal;
         const isCurrent = row.level === info.current;
 
         const reward = row.reward ? row.reward : "—";
-        const cls = [
-          "level",
-          isUnlocked ? "unlocked" : "lock",
-          isCurrent ? "current" : ""
-        ].join(" ").trim();
+        const cls = ["level", isUnlocked ? "unlocked" : "lock", isCurrent ? "current" : ""]
+          .join(" ")
+          .trim();
 
-        grid.appendChild(el("div", { class: cls }, [
-          el("div", { class:"level-top" }, [
-            el("div", {}, [
-              el("div", { class:"level-num" }, [`Nivel ${row.level}`]),
-              el("div", { class:"level-points" }, [`Requiere: ${row.requiredTotal} pts`]),
+        grid.appendChild(
+          el("div", { class: cls }, [
+            el("div", { class: "level-top" }, [
+              el("div", {}, [
+                el("div", { class: "level-num" }, [`Nivel ${row.level}`]),
+                el("div", { class: "level-points" }, [`Requiere: ${row.requiredTotal} pts`]),
+              ]),
+              el("span", { class: "badge" }, [isUnlocked ? "Desbloqueado" : "Bloqueado"]),
             ]),
-            el("span", { class:"badge" }, [isUnlocked ? "Desbloqueado" : "Bloqueado"])
-          ]),
-          el("div", { class:"level-reward" }, [
-  el("span", { class:"badge reward-badge" }, ["Recompensa"]),
-  el("span", { class:"reward-text" }, [reward])
-])
-        ]));
+            el("div", { class: "level-reward" }, [
+              el("span", { class: "badge reward-badge" }, ["Recompensa"]),
+              el("span", { class: "reward-text" }, [reward]),
+            ]),
+          ])
+        );
       }
     }
   }
@@ -352,25 +395,28 @@ const levels = DATA.levels;
 
 /* ---------- EVENTS ---------- */
 
-function initEvents(){
+function initEvents() {
   const { events } = DATA;
   const list = $("#eventsList");
   const input = $("#eventSearch");
+  if (!list) return;
 
-  const sorted = events
-    .slice()
-    .sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+  const sorted = events.slice().sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
-  const render = (q="") => {
+  const render = (q = "") => {
     const qn = q.trim().toLowerCase();
-    const filtered = !qn ? sorted : sorted.filter(e =>
-      (e.type + " " + e.club + " " + e.location + " " + e.datetime).toLowerCase().includes(qn)
-    );
+    const filtered = !qn
+      ? sorted
+      : sorted.filter((e) =>
+          (e.type + " " + e.club + " " + e.location + " " + e.datetime)
+            .toLowerCase()
+            .includes(qn)
+        );
 
     list.innerHTML = "";
-    filtered.forEach(e => list.appendChild(eventItem(e)));
-    if (!filtered.length){
-      list.appendChild(el("div", { class:"muted" }, ["No hay eventos que coincidan."]));
+    filtered.forEach((e) => list.appendChild(eventItem(e)));
+    if (!filtered.length) {
+      list.appendChild(el("div", { class: "muted" }, ["No hay eventos que coincidan."]));
     }
   };
 
@@ -378,43 +424,44 @@ function initEvents(){
   if (input) input.addEventListener("input", () => render(input.value));
 }
 
-function eventItem(e){
-  return el("div", { class:"item" }, [
-    el("div", { class:"item-left" }, [
-      el("div", { class:"item-title" }, [`${e.type} · ${e.title}`]),
-      el("div", { class:"item-sub" }, [`${formatDateTime(e.datetime)} · ${e.club} · ${e.location}`]),
+function eventItem(e) {
+  return el("div", { class: "item" }, [
+    el("div", { class: "item-left" }, [
+      el("div", { class: "item-title" }, [`${e.type} · ${e.title}`]),
+      el("div", { class: "item-sub" }, [`${formatDateTime(e.datetime)} · ${e.club} · ${e.location}`]),
     ]),
-    el("div", { class:"item-right" }, [
-      el("span", { class:"badge" }, [`${e.price_eur}€`]),
-      el("span", { class:"muted small" }, [`Plazas: ${e.spots_left}/${e.spots_total}`]),
-    ])
+    el("div", { class: "item-right" }, [
+      el("span", { class: "badge" }, [`${e.price_eur}€`]),
+      el("span", { class: "muted small" }, [`Plazas: ${e.spots_left}/${e.spots_total}`]),
+    ]),
   ]);
 }
 
 /* ---------- PLAYERS ---------- */
 
-function initPlayers(){
-    const { levels } = DATA;
- const players = DATA.players || [];
+function initPlayers() {
+  const { levels } = DATA;
+  const players = DATA.players || [];
 
   const tbody = $("#playersTable tbody");
   const search = $("#playerSearch");
   const sort = $("#sortPlayers");
+  if (!tbody) return;
 
   const compute = (p) => {
-    const lvl = pointsToLevel(levels, p.points);
+    const lvl = pointsToLevel(levels, p.points || 0);
     const wr = winrate(p);
-    const matches = (p.wins||0)+(p.losses||0);
+    const matches = (p.wins || 0) + (p.losses || 0);
     return { ...p, lvl, wr, matches };
   };
 
   const base = players.map(compute);
 
   const sorters = {
-    points_desc: (a,b)=> b.points - a.points,
-    level_desc: (a,b)=> b.lvl - a.lvl || b.points - a.points,
-    winrate_desc: (a,b)=> b.wr - a.wr || b.points - a.points,
-    matches_desc: (a,b)=> b.matches - a.matches || b.points - a.points
+    points_desc: (a, b) => (b.points || 0) - (a.points || 0),
+    level_desc: (a, b) => b.lvl - a.lvl || (b.points || 0) - (a.points || 0),
+    winrate_desc: (a, b) => b.wr - a.wr || (b.points || 0) - (a.points || 0),
+    matches_desc: (a, b) => b.matches - a.matches || (b.points || 0) - (a.points || 0),
   };
 
   const render = () => {
@@ -422,19 +469,19 @@ function initPlayers(){
     const s = sort?.value || "points_desc";
 
     let rows = base.slice();
-    if (q){
-      rows = rows.filter(p => (p.name + " " + (p.club||"")).toLowerCase().includes(q));
+    if (q) {
+      rows = rows.filter((p) => (p.name + " " + (p.club || "")).toLowerCase().includes(q));
     }
     rows.sort(sorters[s]);
 
     tbody.innerHTML = "";
     rows.forEach((p, idx) => {
       const tr = el("tr", {}, [
-        el("td", {}, [String(idx+1)]),
+        el("td", {}, [String(idx + 1)]),
         el("td", {}, [playerLink(p)]),
         el("td", {}, [String(p.lvl)]),
-        el("td", {}, [String(p.points)]),
-        el("td", {}, [`${p.wins}-${p.losses}`]),
+        el("td", {}, [String(p.points || 0)]),
+        el("td", {}, [`${p.wins || 0}-${p.losses || 0}`]),
         el("td", {}, [`${p.wr.toFixed(1)}%`]),
         el("td", {}, [p.club || "—"]),
       ]);
@@ -447,83 +494,98 @@ function initPlayers(){
   sort?.addEventListener("change", render);
 }
 
-function playerLink(p){
-  const a = el("a", { class:"link", href:`player.html?id=${encodeURIComponent(p.id)}` }, [p.name]);
-  return a;
+function playerLink(p) {
+  return el("a", { class: "link", href: `player.html?id=${encodeURIComponent(p.id)}` }, [p.name]);
 }
 
 /* ---------- PLAYER PROFILE ---------- */
 
-function initPlayerProfile(){
-    const { levels, matches, config } = DATA;
+function initPlayerProfile() {
+  const { levels, matches, config } = DATA;
   const players = DATA.players || [];
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || players[0]?.id;
-  const p = players.find(x => x.id === id) || players[0];
+  const p = players.find((x) => x.id === id) || players[0];
+  if (!p) return;
 
   const head = $("#playerHead");
-  const lvlInfo = nextLevelInfo(levels, p.points);
+  const lvlInfo = nextLevelInfo(levels, p.points || 0);
 
-  if (head){
+  if (head) {
     head.innerHTML = "";
-    head.appendChild(el("div", {}, [
-      el("h1", {}, [p.name]),
-      el("p", { class:"muted" }, [`Club: ${p.club || "—"} · Nivel ${lvlInfo.current} · ${p.points} pts`]),
-    ]));
-    head.appendChild(el("div", { class:"page-actions" }, [
-      el("a", { class:"btn ghost", href:"players.html" }, ["← Volver a jugadores"]),
-      el("a", { class:"btn", href:"pass.html" }, ["Ver pase"]),
-    ]));
+    head.appendChild(
+      el("div", {}, [
+        el("h1", {}, [p.name]),
+        el("p", { class: "muted" }, [
+          `Club: ${p.club || "—"} · Nivel ${lvlInfo.current} · ${p.points || 0} pts`,
+        ]),
+      ])
+    );
+    head.appendChild(
+      el("div", { class: "page-actions" }, [
+        el("a", { class: "btn ghost", href: "players.html" }, ["← Volver a jugadores"]),
+        el("a", { class: "btn", href: "pass.html" }, ["Ver pase"]),
+      ])
+    );
   }
 
   const prog = $("#playerProgress");
-  if (prog){
+  if (prog) {
     prog.innerHTML = "";
-    prog.appendChild(el("div", { class:"muted small" }, [
-      lvlInfo.isMax
-        ? "Máximo nivel alcanzado."
-        : `Siguiente nivel: ${lvlInfo.current + 1} · Objetivo: ${lvlInfo.nextTarget} pts · Te faltan ${lvlInfo.nextTarget - p.points} pts`
-    ]));
-    prog.appendChild(el("div", { style:"height:10px" }));
+    prog.appendChild(
+      el("div", { class: "muted small" }, [
+        lvlInfo.isMax
+          ? "Máximo nivel alcanzado."
+          : `Siguiente nivel: ${lvlInfo.current + 1} · Objetivo: ${lvlInfo.nextTarget} pts · Te faltan ${
+              lvlInfo.nextTarget - (p.points || 0)
+            } pts`,
+      ])
+    );
+    prog.appendChild(el("div", { style: "height:10px" }));
     prog.appendChild(progressBar(lvlInfo.progress));
-    prog.appendChild(el("div", { style:"height:14px" }));
-    prog.appendChild(el("div", { class:"kpi-row" }, [
-      kpi("VICTORIAS", String(p.wins)),
-      kpi("DERROTAS", String(p.losses)),
-      kpi("WINRATE", `${winrate(p).toFixed(1)}%`),
-    ]));
+    prog.appendChild(el("div", { style: "height:14px" }));
+    prog.appendChild(
+      el("div", { class: "kpi-row" }, [
+        kpi("VICTORIAS", String(p.wins || 0)),
+        kpi("DERROTAS", String(p.losses || 0)),
+        kpi("WINRATE", `${winrate(p).toFixed(1)}%`),
+      ])
+    );
   }
 
   const stats = $("#playerStats");
-  if (stats){
-    const total = (p.wins||0)+(p.losses||0);
+  if (stats) {
+    const total = (p.wins || 0) + (p.losses || 0);
     stats.innerHTML = "";
-    stats.appendChild(el("div", { class:"kpi-row" }, [
-      kpi("PARTIDOS", String(total)),
-      kpi("RACHA (demo)", p.streak || "—"),
-      kpi("MEJOR RESULTADO (demo)", p.best || "—"),
-    ]));
+    stats.appendChild(
+      el("div", { class: "kpi-row" }, [
+        kpi("PARTIDOS", String(total)),
+        kpi("RACHA (demo)", p.streak || "—"),
+        kpi("MEJOR RESULTADO (demo)", p.best || "—"),
+      ])
+    );
   }
 
   const missions = $("#playerMissions");
-  if (missions){
+  if (missions) {
     missions.innerHTML = "";
-    // demo: marca completadas según flags del player
-    for (const m of config.monthlyMissions){
+    for (const m of config.monthlyMissions) {
       const done = !!(p.monthlyDone || []).includes(m.id);
       missions.appendChild(missionCard(m, done));
     }
   }
-     // LOGROS (10 huecos) + 1 medalla en Robert
-  const ag = $("#achievementsGrid");
-  if (ag){
-    ag.innerHTML = "";
-    const isRobert = String(p.id).toLowerCase() === "robert" || String(p.name).toLowerCase().includes("robert");
 
-    for (let i = 0; i < 10; i++){
+  // LOGROS (10 huecos) + 1 medalla en Robert
+  const ag = $("#achievementsGrid");
+  if (ag) {
+    ag.innerHTML = "";
+    const isRobert =
+      String(p.id).toLowerCase() === "robert" || String(p.name).toLowerCase().includes("robert");
+
+    for (let i = 0; i < 10; i++) {
       const slot = el("div", { class: "achievement-slot" });
-      if (isRobert && i === 0){
+      if (isRobert && i === 0) {
         slot.classList.add("filled");
         slot.textContent = "🌞";
       }
@@ -532,91 +594,90 @@ function initPlayerProfile(){
   }
 
   const list = $("#playerMatches");
-  if (list){
+  if (list) {
     const recent = matches
-      .filter(x => x.players.includes(p.id))
+      .filter((x) => (x.players || []).includes(p.id))
       .slice()
-      .sort((a,b)=> new Date(b.datetime) - new Date(a.datetime))
+      .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
       .slice(0, 8);
 
     list.innerHTML = "";
-    for (const m of recent){
+    for (const m of recent) {
       const isWin = m.winner === p.id;
-      list.appendChild(el("div", { class:"item" }, [
-        el("div", { class:"item-left" }, [
-          el("div", { class:"item-title" }, [
-            `${isWin ? "Victoria" : "Derrota"} · ${m.score} · ${m.type}`
+      list.appendChild(
+        el("div", { class: "item" }, [
+          el("div", { class: "item-left" }, [
+            el("div", { class: "item-title" }, [`${isWin ? "Victoria" : "Derrota"} · ${m.score} · ${m.type}`]),
+            el("div", { class: "item-sub" }, [
+              `${formatDateTime(m.datetime)} · ${m.club} · vs ${opponentsLabel(m, p.id)}`,
+            ]),
           ]),
-          el("div", { class:"item-sub" }, [
-            `${formatDateTime(m.datetime)} · ${m.club} · vs ${opponentsLabel(m, p.id)}`
+          el("div", { class: "item-right" }, [
+            el("span", { class: "badge" }, [`${(m.pointsEarned && m.pointsEarned[p.id]) || 0} pts`]),
+            el("span", { class: "muted small" }, [m.note || ""]),
           ]),
-        ]),
-        el("div", { class:"item-right" }, [
-          el("span", { class:"badge" }, [`${m.pointsEarned[p.id] || 0} pts`]),
-          el("span", { class:"muted small" }, [m.note || ""])
         ])
-      ]));
+      );
     }
-    if (!recent.length){
-      list.appendChild(el("div", { class:"muted" }, ["Aún no hay partidos registrados para este jugador."]));
+    if (!recent.length) {
+      list.appendChild(el("div", { class: "muted" }, ["Aún no hay partidos registrados para este jugador."]));
     }
   }
 }
 
-function opponentsLabel(match, pid){
-  const ids = match.players.filter(x => x !== pid);
-  const names = ids.map(id => (DATA.players.find(p => p.id === id)?.name || id));
+function opponentsLabel(match, pid) {
+  const ids = (match.players || []).filter((x) => x !== pid);
+  const names = ids.map((id) => DATA.players.find((p) => p.id === id)?.name || id);
   return names.join(", ");
 }
 
-function kpi(k, v){
-  return el("div", { class:"kpi" }, [
-    el("div", { class:"k" }, [k]),
-    el("div", { class:"v" }, [v]),
+function kpi(k, v) {
+  return el("div", { class: "kpi" }, [el("div", { class: "k" }, [k]), el("div", { class: "v" }, [v])]);
+}
+
+function missionCard(m, done) {
+  return el("div", { class: "mission" }, [
+    el("h3", {}, [m.title]),
+    el("div", { class: "muted small" }, [m.desc]),
+    el("div", { style: "height:10px" }),
+    el("div", { class: "meta" }, [
+      el("span", {}, [`+${m.points} pts`]),
+      el("span", { class: done ? "done" : "" }, [done ? "Completado" : "Pendiente"]),
+    ]),
   ]);
 }
 
-function missionCard(m, done){
-  return el("div", { class:"mission" }, [
-    el("h3", {}, [m.title]),
-    el("div", { class:"muted small" }, [m.desc]),
-    el("div", { style:"height:10px" }),
-    el("div", { class:"meta" }, [
-      el("span", {}, [`+${m.points} pts`]),
-      el("span", { class: done ? "done" : "" }, [done ? "Completado" : "Pendiente"]),
-    ])
-  ]);
-}
 /* ---------- LOCAL PLAYERS (registro sin backend) ---------- */
 
 const LS_PLAYERS_KEY = "pp_local_players_v1";
 
-function getLocalPlayers(){
-  try { return JSON.parse(localStorage.getItem(LS_PLAYERS_KEY) || "[]"); }
-  catch { return []; }
+function getLocalPlayers() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_PLAYERS_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
-function setLocalPlayers(list){
+function setLocalPlayers(list) {
   localStorage.setItem(LS_PLAYERS_KEY, JSON.stringify(list));
 }
 
-function slugifyId(name){
+function slugifyId(name) {
   const base = String(name || "")
     .trim()
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
   const rand = Math.random().toString(36).slice(2, 6);
   return base ? `${base}-${rand}` : `player-${rand}`;
 }
 
-
-
 /* ---------- REGISTER ---------- */
 
-async function initRegister(){
-  // genera preview ID según nombre
+async function initRegister() {
   const form = $("#registerForm");
   const msg = $("#registerMsg");
   const idPreview = form?.querySelector('input[name="idPreview"]');
@@ -638,14 +699,13 @@ async function initRegister(){
     const club = String(fd.get("club") || "").trim();
     const contact = String(fd.get("contact") || "").trim();
 
-    if (!name){
+    if (!name) {
       if (msg) msg.textContent = "❌ El nombre es obligatorio.";
       return;
     }
 
     const id = slugifyId(name);
 
-    // estructura compatible con tu app
     const newPlayer = {
       id,
       name,
@@ -654,20 +714,19 @@ async function initRegister(){
       points: 0,
       wins: 0,
       losses: 0,
-      monthlyDone: []
+      monthlyDone: [],
     };
 
     try {
-  await ensureAuth();
-  await setDoc(doc(db, "players", newPlayer.id), newPlayer);
-  await loadAllData();
-  if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
-} catch (err) {
-  console.error(err);
-  if (msg) msg.textContent = `❌ Error guardando en Firebase: ${err?.code || err?.message || err}`;
-}
+      await ensureAuth();
+      await setDoc(doc(db, "players", newPlayer.id), newPlayer);
+      await loadAllData();
+      if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
+    } catch (err) {
+      console.error(err);
+      if (msg) msg.textContent = `❌ Error guardando en Firebase: ${err?.code || err?.message || err}`;
+    }
 
-    // limpiar campos (menos idPreview)
     form.reset();
     updatePreview();
   });
@@ -691,14 +750,16 @@ async function initRegister(){
   });
 }
 
-async function fetchPlayersFromFirestore(){
+async function fetchPlayersFromFirestore() {
   const snap = await getDocs(collection(db, "players"));
   const out = [];
-  snap.forEach(d => out.push(d.data()));
+  snap.forEach((d) => out.push(d.data()));
   return out;
 }
 
-async function initAdmin(){
+/* ---------- ADMIN ---------- */
+
+async function initAdmin() {
   await ensureAuth();
 
   const keyInput = $("#adminKeyInput");
@@ -709,31 +770,33 @@ async function initAdmin(){
 
   const getKey = () => String(keyInput?.value || "").trim();
 
-  async function loadTable(){
+  async function loadTable() {
     await loadAllData();
-    const players = (DATA.players || []).slice().sort((a,b)=> (b.points||0)-(a.points||0));
+    const players = (DATA.players || []).slice().sort((a, b) => (b.points || 0) - (a.points || 0));
 
+    if (!tbody) return;
     tbody.innerHTML = "";
-    players.forEach(p => {
+
+    players.forEach((p) => {
       const tr = el("tr", {}, [
         el("td", {}, [p.name || "—"]),
         el("td", {}, [p.id]),
         el("td", {}, [String(p.points ?? 0)]),
         el("td", {}, [`${p.wins ?? 0}-${p.losses ?? 0}`]),
         el("td", {}, [
-          el("button", { class:"btn ghost", type:"button", "data-id": p.id }, ["Editar"]),
-          el("span", { style:"display:inline-block;width:8px" }, [""]),
-          el("button", { class:"btn ghost", type:"button", "data-del": p.id }, ["Borrar"]),
+          el("button", { class: "btn ghost", type: "button", "data-id": p.id }, ["Editar"]),
+          el("span", { style: "display:inline-block;width:8px" }, [""]),
+          el("button", { class: "btn ghost", type: "button", "data-del": p.id }, ["Borrar"]),
         ]),
       ]);
       tbody.appendChild(tr);
     });
 
-    tbody.querySelectorAll('button[data-id]').forEach(btn => {
+    tbody.querySelectorAll('button[data-id]').forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-id");
-        const p = (DATA.players || []).find(x => x.id === id);
-        if (!p) return;
+        const p = (DATA.players || []).find((x) => x.id === id);
+        if (!p || !form) return;
 
         form.name.value = p.name || "";
         form.id.value = p.id || "";
@@ -743,15 +806,18 @@ async function initAdmin(){
         form.wins.value = p.wins ?? 0;
         form.losses.value = p.losses ?? 0;
 
-        editMsg.textContent = `Editando: ${p.name}`;
+        if (editMsg) editMsg.textContent = `Editando: ${p.name}`;
       });
     });
 
-    tbody.querySelectorAll('button[data-del]').forEach(btn => {
+    tbody.querySelectorAll('button[data-del]').forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-del");
         const key = getKey();
-        if (!key) { msg.textContent = "❌ Pon la clave admin."; return; }
+        if (!key) {
+          if (msg) msg.textContent = "❌ Pon la clave admin.";
+          return;
+        }
 
         const ok = confirm("¿Seguro que quieres borrar este jugador?");
         if (!ok) return;
@@ -759,11 +825,11 @@ async function initAdmin(){
         try {
           await updateDoc(doc(db, "players", id), { adminKey: key });
           await deleteDoc(doc(db, "players", id));
-          msg.textContent = "✅ Jugador borrado.";
+          if (msg) msg.textContent = "✅ Jugador borrado.";
           await loadTable();
-        } catch (err){
+        } catch (err) {
           console.error(err);
-          msg.textContent = `❌ Error borrando: ${err?.code || err?.message || err}`;
+          if (msg) msg.textContent = `❌ Error borrando: ${err?.code || err?.message || err}`;
         }
       });
     });
@@ -774,10 +840,16 @@ async function initAdmin(){
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const key = getKey();
-    if (!key) { editMsg.textContent = "❌ Pon la clave admin."; return; }
+    if (!key) {
+      if (editMsg) editMsg.textContent = "❌ Pon la clave admin.";
+      return;
+    }
 
     const id = String(form.id.value || "").trim();
-    if (!id) { editMsg.textContent = "❌ No hay jugador seleccionado."; return; }
+    if (!id) {
+      if (editMsg) editMsg.textContent = "❌ No hay jugador seleccionado.";
+      return;
+    }
 
     const payload = {
       name: String(form.name.value || "").trim(),
@@ -793,21 +865,13 @@ async function initAdmin(){
       await updateDoc(doc(db, "players", id), payload);
       await updateDoc(doc(db, "players", id), { adminKey: deleteField() });
 
-      editMsg.textContent = "✅ Guardado.";
+      if (editMsg) editMsg.textContent = "✅ Guardado.";
       await loadTable();
     } catch (err) {
       console.error(err);
-      editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
+      if (editMsg) editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
     }
   });
-
-  await loadTable();
-}
-
-} catch (err) {
-  console.error(err);
-  editMsg.textContent = `❌ Error guardando: ${err?.code || err?.message || err}`;
-}
 
   await loadTable();
 }
