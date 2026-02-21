@@ -13,6 +13,7 @@ const pages = {
   events: initEvents,
   players: initPlayers,
   player: initPlayerProfile,
+  register: initRegister,
 };
 
 boot();
@@ -132,7 +133,8 @@ function progressBar(pct){
 /* ---------- HOME ---------- */
 
 function initHome(){
-  const { players, events, levels, config } = DATA;
+   const { events, levels, config } = DATA;
+  const players = mergePlayersWithLocal(DATA.players);
 
   // Stats
   const totalPlayers = players.length;
@@ -343,7 +345,8 @@ function eventItem(e){
 /* ---------- PLAYERS ---------- */
 
 function initPlayers(){
-  const { players, levels } = DATA;
+    const { levels } = DATA;
+  const players = mergePlayersWithLocal(DATA.players);
 
   const tbody = $("#playersTable tbody");
   const search = $("#playerSearch");
@@ -403,7 +406,8 @@ function playerLink(p){
 /* ---------- PLAYER PROFILE ---------- */
 
 function initPlayerProfile(){
-  const { players, levels, matches, config } = DATA;
+    const { levels, matches, config } = DATA;
+  const players = mergePlayersWithLocal(DATA.players);
 
   const params = new URLSearchParams(location.search);
   const id = params.get("id") || players[0]?.id;
@@ -533,4 +537,115 @@ function missionCard(m, done){
       el("span", { class: done ? "done" : "" }, [done ? "Completado" : "Pendiente"]),
     ])
   ]);
+}
+/* ---------- LOCAL PLAYERS (registro sin backend) ---------- */
+
+const LS_PLAYERS_KEY = "pp_local_players_v1";
+
+function getLocalPlayers(){
+  try { return JSON.parse(localStorage.getItem(LS_PLAYERS_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function setLocalPlayers(list){
+  localStorage.setItem(LS_PLAYERS_KEY, JSON.stringify(list));
+}
+
+function slugifyId(name){
+  const base = String(name || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const rand = Math.random().toString(36).slice(2, 6);
+  return base ? `${base}-${rand}` : `player-${rand}`;
+}
+
+function mergePlayersWithLocal(players){
+  const locals = getLocalPlayers();
+  const used = new Set(players.map(p => p.id));
+  const safeLocals = locals.filter(p => p && p.id && !used.has(p.id));
+  return players.concat(safeLocals);
+}
+
+/* ---------- REGISTER ---------- */
+
+function initRegister(){
+  // genera preview ID según nombre
+  const form = $("#registerForm");
+  const msg = $("#registerMsg");
+  const idPreview = form?.querySelector('input[name="idPreview"]');
+  const nameInput = form?.querySelector('input[name="name"]');
+
+  const updatePreview = () => {
+    if (!idPreview) return;
+    const name = nameInput?.value || "";
+    idPreview.value = name ? slugifyId(name).replace(/-[a-z0-9]{4}$/, "-xxxx") : "";
+  };
+
+  nameInput?.addEventListener("input", updatePreview);
+  updatePreview();
+
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const name = String(fd.get("name") || "").trim();
+    const club = String(fd.get("club") || "").trim();
+    const contact = String(fd.get("contact") || "").trim();
+
+    if (!name){
+      if (msg) msg.textContent = "❌ El nombre es obligatorio.";
+      return;
+    }
+
+    const id = slugifyId(name);
+
+    // estructura compatible con tu app
+    const newPlayer = {
+      id,
+      name,
+      club: club || "",
+      contact: contact || "",
+      points: 0,
+      wins: 0,
+      losses: 0,
+      monthlyDone: []
+    };
+
+    const locals = getLocalPlayers();
+    // evita duplicar por nombre exacto
+    const dup = locals.some(p => (p.name || "").trim().toLowerCase() === name.toLowerCase());
+    if (dup){
+      if (msg) msg.textContent = "⚠️ Ya existe un jugador local con ese nombre (en este dispositivo).";
+      return;
+    }
+
+    locals.push(newPlayer);
+    setLocalPlayers(locals);
+
+    if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
+
+    // limpiar campos (menos idPreview)
+    form.reset();
+    updatePreview();
+  });
+
+  $("#exportLocalPlayers")?.addEventListener("click", () => {
+    const locals = getLocalPlayers();
+    const blob = new Blob([JSON.stringify(locals, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "players_local_export.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $("#clearLocalPlayers")?.addEventListener("click", () => {
+    localStorage.removeItem(LS_PLAYERS_KEY);
+    if (msg) msg.textContent = "🗑️ Jugadores locales borrados.";
+  });
 }
