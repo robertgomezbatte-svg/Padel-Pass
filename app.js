@@ -1,130 +1,49 @@
-/* app.js */
 /* Padel Pass MVP (web estática)
    - Carga JSON de /data
-   - Renderiza páginas: home, pass, events, players, player, register, admin
+   - Renderiza páginas: home, pass, events, players, player
 */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDocs,
-  collection,
-  deleteDoc,
-  updateDoc,
-  deleteField,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-// ✅ FALTABA ESTO (Auth)
-import {
-  getAuth,
-  signInAnonymously,
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-
-// 🔹 Configuración Firebase
+const DATA = {};
+// ===== Firebase config (PEGA EL TUYO AQUÍ) =====
 const firebaseConfig = {
-  apiKey: "AIzaSyD3y1nQH3mw0b0zY2lqv5Z7yS7nDq1Jc1A",
-  authDomain: "padel-pass.firebaseapp.com",
-  projectId: "padel-pass",
-  storageBucket: "padel-pass.appspot.com",
-  messagingSenderId: "390197286333",
-  appId: "1:390197286333:web:2bfae3b8b2e7c42bc0b0a1",
+  apiKey: "AIzaSyBWSoiw31QAgk4oRuhFnGN2IZKKW7RwKdY",
+  authDomain: "padel-pass-2782b.firebaseapp.com",
+  projectId: "padel-pass-2782b",
+  storageBucket: "padel-pass-2782b.firebasestorage.app",
+  messagingSenderId: "1073609889878",
+  appId: "1:1073609889878:web:2f2edaaf530796a65843f7",
+  measurementId: "G-RB0XNVGM4D"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const auth = getAuth(fbApp);
 
-// ✅ Inicializar Auth y loguearse anónimo
-const auth = getAuth(app);
-signInAnonymously(auth).catch((error) => {
-  console.error("Error auth:", error);
-});
-
-// Helpers DOM
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-
-const fmt = {
-  date(d) {
-    const dt = new Date(d);
-    return dt.toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  },
-  num(n) {
-    return new Intl.NumberFormat("es-ES").format(n);
-  },
-};
-
-// Estado
-let DATA = {
-  events: [],
-  players: [],
-  pass: [],
-  missions: [],
-};
-
-// 🔹 Carga de datos desde JSON
-async function loadAllData() {
-  const [events, players, pass, missions] = await Promise.all([
-    fetch("data/events.json").then((r) => r.json()),
-    fetch("data/players.json").then((r) => r.json()),
-    fetch("data/pass.json").then((r) => r.json()),
-    fetch("data/missions.json").then((r) => r.json()),
-  ]);
-
-  DATA = { events, players, pass, missions };
+async function ensureAuth(){
+  if (auth.currentUser) return auth.currentUser;
+  const cred = await signInAnonymously(auth);
+  return cred.user;
 }
-
-// Páginas
 const pages = {
-  home() {
-    renderHome();
-  },
-  pass() {
-    renderPass();
-  },
-  events() {
-    renderEvents();
-  },
-  players() {
-    renderPlayers();
-  },
-  player() {
-    renderPlayerProfile();
-  },
-  register() {
-    initRegister();
-  },
-  admin() {
-    initAdmin();
-  },
+  home: initHome,
+  pass: initPass,
+  events: initEvents,
+  players: initPlayers,
+  player: initPlayerProfile,
+  register: initRegister,
 };
 
-// BOOT
-(async function main() {
-  try {
-    await boot();
-  } catch (err) {
-    console.error(err);
-    const el = $("#app");
-    if (el) {
-      el.innerHTML = `<div class="wrap section"><div class="card"><div class="bd"><b>Error</b><p class="help">${String(
-        err
-      )}</p></div></div></div>`;
-    }
-  }
-})();
+boot();
 
-async function boot() {
+async function boot(){
   setYear();
   initTheme();
-  initNav();
 
   await loadAllData();
 
@@ -132,12 +51,12 @@ async function boot() {
   if (pages[page]) pages[page]();
 }
 
-function setYear() {
+function setYear(){
   const el = $("#year");
   if (el) el.textContent = new Date().getFullYear();
 }
 
-function initTheme() {
+function initTheme(){
   const key = "pp_theme";
   const current = localStorage.getItem(key) || "light";
   document.documentElement.dataset.theme = current;
@@ -146,566 +65,623 @@ function initTheme() {
   if (!btn) return;
 
   btn.addEventListener("click", () => {
-    const next =
-      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     localStorage.setItem(key, next);
   });
 }
 
-function initNav() {
-  const toggle = document.getElementById("navToggle");
-  const nav = document.getElementById("siteNav");
-  const backdrop = document.getElementById("navBackdrop");
-  if (!toggle || !nav || !backdrop) return;
-
-  const close = () => {
-    document.body.classList.remove("nav-open");
-    toggle.setAttribute("aria-expanded", "false");
-    backdrop.hidden = true;
-  };
-
-  const open = () => {
-    document.body.classList.add("nav-open");
-    toggle.setAttribute("aria-expanded", "true");
-    backdrop.hidden = false;
-  };
-
-  const isOpen = () => document.body.classList.contains("nav-open");
-
-  toggle.addEventListener("click", () => {
-    if (isOpen()) close();
-    else open();
-  });
-
-  backdrop.addEventListener("click", close);
-
-  nav.addEventListener("click", (e) => {
-    const a = e.target.closest("a");
-    if (a) close();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
-
-  window.addEventListener("resize", () => {
-    if (window.innerWidth > 980) close();
-  });
+async function fetchJSON(path){
+  const res = await fetch(path, { cache: "no-store" });
+  if (!res.ok) throw new Error(`No se pudo cargar ${path}`);
+  return res.json();
 }
 
-// HOME
-function renderHome() {
-  const upcoming = [...DATA.events]
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .slice(0, 4);
-
-  const topPlayers = [...DATA.players]
-    .sort((a, b) => (b.points || 0) - (a.points || 0))
-    .slice(0, 5);
-
-  const app = $("#app");
-  if (!app) return;
-
-  app.innerHTML = `
-    <div class="wrap section">
-      <div class="hero">
-        <div class="card hero-card">
-          <h1 class="hero-title">Tu pase al pádel competitivo.</h1>
-          <p class="hero-sub">Sigue tu progreso, sube niveles, desbloquea recompensas y entra en los eventos que se vienen.</p>
-          <div class="hero-actions">
-            <a class="btn primary" href="events.html">Ver eventos</a>
-            <a class="btn" href="players.html">Ranking</a>
-            <a class="btn ghost" href="pass.html">Pase</a>
-          </div>
-          <div class="hero-badges">
-            <span class="pill"><b>${fmt.num(DATA.players.length)}</b> jugadores</span>
-            <span class="pill"><b>${fmt.num(DATA.events.length)}</b> eventos</span>
-            <span class="pill"><b>30</b> niveles</span>
-          </div>
-        </div>
-
-        <div class="card hero-card">
-          <div class="kpi">
-            <div class="box">
-              <div class="n">${fmt.num(
-                DATA.players.reduce((acc, p) => acc + (p.matches || 0), 0)
-              )}</div>
-              <div class="t">Partidos registrados</div>
-            </div>
-            <div class="box">
-              <div class="n">${fmt.num(
-                DATA.players.reduce((acc, p) => acc + (p.wins || 0), 0)
-              )}</div>
-              <div class="t">Victorias</div>
-            </div>
-            <div class="box">
-              <div class="n">${fmt.num(
-                DATA.events.filter((e) => e.status === "open").length
-              )}</div>
-              <div class="t">Inscripción abierta</div>
-            </div>
-            <div class="box">
-              <div class="n">${fmt.num(
-                DATA.events.filter((e) => e.status === "closed").length
-              )}</div>
-              <div class="t">Cerrados</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-top:18px">
-        <div class="card">
-          <div class="hd"><b>Próximos eventos</b></div>
-          <div class="bd">
-            <div class="list">
-              ${upcoming
-                .map(
-                  (e) => `
-                <div class="item">
-                  <div class="l">
-                    <div class="t">${e.title}</div>
-                    <div class="m">${fmt.date(e.date)} · ${e.location}</div>
-                  </div>
-                  <div class="r">
-                    <span class="badge ${
-                      e.status === "open" ? "ok" : "warn"
-                    }"><span class="dot"></span>${e.status}</span>
-                    <a class="btn" href="events.html">Ver</a>
-                  </div>
-                </div>
-              `
-                )
-                .join("")}
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="hd"><b>Top jugadores</b></div>
-          <div class="bd">
-            <div class="list">
-              ${topPlayers
-                .map(
-                  (p, idx) => `
-                <div class="item">
-                  <div class="l">
-                    <div class="t">#${idx + 1} · ${p.name}</div>
-                    <div class="m">${p.club || "—"} · ${
-                    p.level || "—"
-                  }</div>
-                  </div>
-                  <div class="r">
-                    <span class="pill"><b>${fmt.num(
-                      p.points || 0
-                    )}</b> pts</span>
-                    <a class="btn" href="player.html?id=${encodeURIComponent(
-                      p.id
-                    )}">Perfil</a>
-                  </div>
-                </div>
-              `
-                )
-                .join("")}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// PASS
-function renderPass() {
-  const app = $("#app");
-  if (!app) return;
-
-  app.innerHTML = `
-    <div class="wrap section">
-      <div class="card">
-        <div class="hd">
-          <b>Pase — 30 niveles</b>
-          <div class="help">Demo de progresión y recompensas</div>
-        </div>
-        <div class="bd">
-          <div class="levels">
-            ${DATA.pass
-              .map((lvl) => {
-                const pct = Math.max(
-                  0,
-                  Math.min(100, Number(lvl.progress || 0))
-                );
-                return `
-                  <div class="level">
-                    <div class="h">
-                      <b>Nivel ${lvl.level}</b>
-                      <span>${pct}%</span>
-                    </div>
-                    <div class="help">${lvl.reward}</div>
-                    <div class="progress"><i style="width:${pct}%"></i></div>
-                  </div>
-                `;
-              })
-              .join("")}
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// EVENTS
-function renderEvents() {
-  const app = $("#app");
-  if (!app) return;
-
-  const state = {
-    q: "",
-    status: "all",
-  };
-
-  const render = () => {
-    const filtered = DATA.events
-      .filter((e) => {
-        if (state.status !== "all" && e.status !== state.status) return false;
-        const hay = `${e.title} ${e.location}`.toLowerCase();
-        return hay.includes(state.q.toLowerCase());
-      })
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    app.innerHTML = `
-      <div class="wrap section">
-        <div class="card">
-          <div class="hd">
-            <b>Eventos</b>
-            <div class="help">Busca y filtra (demo)</div>
-          </div>
-          <div class="bd">
-            <div class="filters" style="margin-bottom:12px">
-              <input id="q" placeholder="Buscar por nombre o ciudad..." value="${
-                state.q
-              }" />
-              <button class="chip ${state.status === "all" ? "active" : ""}" data-status="all">Todos</button>
-              <button class="chip ${state.status === "open" ? "active" : ""}" data-status="open">Open</button>
-              <button class="chip ${
-                state.status === "closed" ? "active" : ""
-              }" data-status="closed">Closed</button>
-            </div>
-
-            <div class="list">
-              ${filtered
-                .map(
-                  (e) => `
-                  <div class="item">
-                    <div class="l">
-                      <div class="t">${e.title}</div>
-                      <div class="m">${fmt.date(e.date)} · ${
-                    e.location
-                  } · ${e.format}</div>
-                    </div>
-                    <div class="r">
-                      <span class="badge ${
-                        e.status === "open" ? "ok" : "warn"
-                      }"><span class="dot"></span>${e.status}</span>
-                      <span class="pill"><b>${fmt.num(
-                        e.slots
-                      )}</b> plazas</span>
-                    </div>
-                  </div>
-                `
-                )
-                .join("")}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $("#q").addEventListener("input", (ev) => {
-      state.q = ev.target.value;
-      render();
-    });
-
-    $$(".chip").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.status = b.dataset.status;
-        render();
-      })
-    );
-  };
-
-  render();
-}
-
-// PLAYERS
-function renderPlayers() {
-  const app = $("#app");
-  if (!app) return;
-
-  const state = {
-    q: "",
-  };
-
-  const render = () => {
-    const filtered = DATA.players
-      .filter((p) => {
-        const hay = `${p.name} ${p.club || ""}`.toLowerCase();
-        return hay.includes(state.q.toLowerCase());
-      })
-      .sort((a, b) => (b.points || 0) - (a.points || 0));
-
-    app.innerHTML = `
-      <div class="wrap section">
-        <div class="card">
-          <div class="hd">
-            <b>Jugadores</b>
-            <div class="help">Ranking con búsqueda (demo)</div>
-          </div>
-          <div class="bd">
-            <div class="filters" style="margin-bottom:12px">
-              <input id="q" placeholder="Buscar jugador o club..." value="${
-                state.q
-              }" />
-            </div>
-
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Club</th>
-                    <th>Nivel</th>
-                    <th>Pts</th>
-                    <th>W-L</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filtered
-                    .map((p, idx) => {
-                      const wins = p.wins || 0;
-                      const losses = (p.matches || 0) - wins;
-                      return `
-                        <tr>
-                          <td><b>${idx + 1}</b></td>
-                          <td>
-                            <div class="player-card">
-                              <div class="avatar"></div>
-                              <div class="meta">
-                                <b>${p.name}</b>
-                                <span>${p.handle || ""}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>${p.club || "—"}</td>
-                          <td>${p.level || "—"}</td>
-                          <td><b>${fmt.num(p.points || 0)}</b></td>
-                          <td>${wins}-${losses}</td>
-                          <td><a class="btn" href="player.html?id=${encodeURIComponent(
-                            p.id
-                          )}">Perfil</a></td>
-                        </tr>
-                      `;
-                    })
-                    .join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    $("#q").addEventListener("input", (ev) => {
-      state.q = ev.target.value;
-      render();
-    });
-  };
-
-  render();
-}
-
-// PLAYER PROFILE
-function renderPlayerProfile() {
-  const app = $("#app");
-  if (!app) return;
-
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  const p = DATA.players.find((x) => String(x.id) === String(id)) || DATA.players[0];
-
-  if (!p) {
-    app.innerHTML = `<div class="wrap section"><div class="card"><div class="bd"><b>No encontrado</b></div></div></div>`;
-    return;
+async function loadAllData(){
+  const files = ["config", "levels", "events", "matches"];
+  for (const f of files){
+    DATA[f] = await fetchJSON(`data/${f}.json`);
   }
 
-  const wins = p.wins || 0;
-  const matches = p.matches || 0;
-  const losses = Math.max(0, matches - wins);
-  const winrate = matches ? Math.round((wins / matches) * 100) : 0;
+  const basePlayers = await fetchJSON("data/players.json");
 
-  app.innerHTML = `
-    <div class="wrap section">
-      <div class="grid-2">
-        <div class="card">
-          <div class="bd">
-            <div class="player-card">
-              <div class="avatar" style="width:54px;height:54px;border-radius:18px"></div>
-              <div class="meta">
-                <b style="font-size:18px">${p.name}</b>
-                <span>${p.handle || ""} · ${p.club || "—"}</span>
-              </div>
-            </div>
+  let cloudPlayers = [];
+  try {
+    cloudPlayers = await fetchPlayersFromFirestore();
+  } catch (e) {
+    console.warn("Firestore no disponible, usando solo JSON local.", e);
+  }
 
-            <div class="grid-3" style="margin-top:14px">
-              <div class="card" style="box-shadow:none">
-                <div class="bd">
-                  <div class="t help">Nivel</div>
-                  <div class="n" style="font-weight:900;font-size:22px">${p.level || "—"}</div>
-                </div>
-              </div>
-              <div class="card" style="box-shadow:none">
-                <div class="bd">
-                  <div class="t help">Puntos</div>
-                  <div class="n" style="font-weight:900;font-size:22px">${fmt.num(
-                    p.points || 0
-                  )}</div>
-                </div>
-              </div>
-              <div class="card" style="box-shadow:none">
-                <div class="bd">
-                  <div class="t help">Winrate</div>
-                  <div class="n" style="font-weight:900;font-size:22px">${winrate}%</div>
-                </div>
-              </div>
-            </div>
+  const map = new Map();
+  basePlayers.forEach(p => map.set(p.id, p));
+  cloudPlayers.forEach(p => map.set(p.id, p));
 
-            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-              <span class="badge ok"><span class="dot"></span>${wins} wins</span>
-              <span class="badge bad"><span class="dot"></span>${losses} losses</span>
-              <span class="pill"><b>${matches}</b> partidos</span>
-            </div>
-          </div>
-        </div>
+  DATA.players = Array.from(map.values());
+}
+/* ---------- helpers de negocio ---------- */
 
-        <div class="card">
-          <div class="hd"><b>Objetivos mensuales (demo)</b></div>
-          <div class="bd">
-            <div class="list">
-              ${(DATA.missions || [])
-                .slice(0, 5)
-                .map(
-                  (m) => `
-                <div class="item">
-                  <div class="l">
-                    <div class="t">${m.title}</div>
-                    <div class="m">${m.desc}</div>
-                  </div>
-                  <div class="r">
-                    <span class="pill"><b>${m.reward}</b></span>
-                  </div>
-                </div>
-              `
-                )
-                .join("")}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+function pointsToLevel(levels, points){
+  // levels: array of {level, requiredTotal}
+  // Retorna nivel actual (1..30) según puntos totales
+  let lvl = 1;
+  for (const row of levels){
+    if (points >= row.requiredTotal) lvl = row.level;
+  }
+  return lvl;
 }
 
-// REGISTER (demo)
-function initRegister() {
+function nextLevelInfo(levels, points){
+  const current = pointsToLevel(levels, points);
+  const currentRow = levels.find(x => x.level === current);
+  const nextRow = levels.find(x => x.level === current + 1);
+
+  const currentFloor = currentRow ? currentRow.requiredTotal : 0;
+  const nextTarget = nextRow ? nextRow.requiredTotal : currentFloor;
+
+  const progress = nextRow
+    ? clamp((points - currentFloor) / (nextTarget - currentFloor), 0, 1)
+    : 1;
+
+  return {
+    current,
+    currentFloor,
+    nextTarget,
+    progress,
+    isMax: !nextRow
+  };
+}
+
+function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+function winrate(p){
+  const total = (p.wins || 0) + (p.losses || 0);
+  if (!total) return 0;
+  return (p.wins / total) * 100;
+}
+
+function formatDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleString("es-ES", { weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+}
+
+/* ---------- render UI ---------- */
+
+function el(tag, attrs={}, children=[]){
+  const node = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)){
+    if (k === "class") node.className = v;
+    else if (k === "html") node.innerHTML = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children){
+    node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+
+function progressBar(pct){
+  const wrap = el("div", { class:"progress" });
+  const bar = el("div");
+  bar.style.width = `${Math.round(pct*100)}%`;
+  wrap.appendChild(bar);
+  return wrap;
+}
+
+/* ---------- HOME ---------- */
+
+function initHome(){
+   const { events, levels, config } = DATA;
+  const players = DATA.players || [];
+
+  // Stats
+  const totalPlayers = players.length;
+  const totalEvents = events.length;
+  const totalMatches = DATA.matches.length;
+
+  const statsEl = $("#homeStats");
+  if (statsEl){
+    statsEl.innerHTML = "";
+    statsEl.appendChild(statCard("JUGADORES", totalPlayers));
+    statsEl.appendChild(statCard("EVENTOS", totalEvents));
+    statsEl.appendChild(statCard("PARTIDOS", totalMatches));
+  }
+
+  // Upcoming events
+  const upcoming = events
+    .slice()
+    .sort((a,b)=> new Date(a.datetime) - new Date(b.datetime))
+    .slice(0, 4);
+
+  const upEl = $("#upcomingEvents");
+  if (upEl){
+    upEl.innerHTML = "";
+    for (const e of upcoming) upEl.appendChild(eventItem(e));
+  }
+
+  // Top players
+  const top = players
+    .slice()
+    .sort((a,b)=> b.points - a.points)
+    .slice(0, 6);
+
+  const tbody = $("#topPlayersTable tbody");
+  if (tbody){
+    tbody.innerHTML = "";
+    top.forEach((p, idx) => {
+      const lvl = pointsToLevel(levels, p.points);
+      const tr = el("tr", {}, [
+        el("td", {}, [String(idx+1)]),
+        el("td", {}, [playerLink(p)]),
+        el("td", {}, [String(lvl)]),
+        el("td", {}, [String(p.points)]),
+        el("td", {}, [`${p.wins}-${p.losses}`]),
+      ]);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Featured progress (el #1)
+  const featured = top[0] || players[0];
+  const fp = $("#featuredProgress");
+  if (fp && featured){
+    const info = nextLevelInfo(levels, featured.points);
+    fp.innerHTML = "";
+    fp.appendChild(el("div", { class:"kpi-row" }, [
+      kpi("JUGADOR", featured.name),
+      kpi("NIVEL", String(info.current)),
+      kpi("PUNTOS", String(featured.points)),
+    ]));
+    fp.appendChild(el("div", { style:"height:12px" }));
+    fp.appendChild(el("div", { class:"muted small" }, [
+      info.isMax
+        ? "Máximo nivel alcanzado."
+        : `Siguiente nivel: ${info.current + 1} · Objetivo: ${info.nextTarget} pts`
+    ]));
+    fp.appendChild(el("div", { style:"height:10px" }));
+    fp.appendChild(progressBar(info.progress));
+    fp.appendChild(el("div", { style:"height:12px" }));
+    fp.appendChild(el("a", { class:"btn ghost", href:`player.html?id=${encodeURIComponent(featured.id)}` }, ["Ver perfil →"]));
+  }
+
+  // Monthly missions (demo del config)
+  const missionsEl = $("#monthlyMissions");
+  if (missionsEl){
+    missionsEl.innerHTML = "";
+    for (const m of config.monthlyMissions){
+      missionsEl.appendChild(missionCard(m, false));
+    }
+  }
+}
+
+function statCard(label, value){
+  return el("div", { class:"stat" }, [
+    el("div", { class:"k" }, [label]),
+    el("div", { class:"v" }, [String(value)])
+  ]);
+}
+
+/* ---------- PASS ---------- */
+
+function initPass(){
+  const { players, levels } = DATA;
+
+  const select = $("#playerSelect");
+  if (select){
+    select.innerHTML = "";
+    players
+      .slice()
+      .sort((a,b)=> b.points - a.points)
+      .forEach(p => {
+        select.appendChild(el("option", { value: p.id }, [p.name]));
+      });
+
+    // default: top 1
+    renderPassFor(select.value);
+
+    select.addEventListener("change", () => renderPassFor(select.value));
+  } else {
+    renderPassFor(players[0]?.id);
+  }
+
+  function renderPassFor(playerId){
+    const p = players.find(x => x.id === playerId) || players[0];
+    const info = nextLevelInfo(levels, p.points);
+
+    const progressEl = $("#passProgress");
+    if (progressEl){
+      progressEl.innerHTML = "";
+      progressEl.appendChild(el("div", { class:"kpi-row" }, [
+        kpi("JUGADOR", p.name),
+        kpi("NIVEL", String(info.current)),
+        kpi("PUNTOS", String(p.points)),
+      ]));
+
+      progressEl.appendChild(el("div", { style:"height:12px" }));
+      progressEl.appendChild(el("div", { class:"muted small" }, [
+        info.isMax
+          ? "Máximo nivel alcanzado."
+          : `Siguiente nivel: ${info.current + 1} · Te faltan ${info.nextTarget - p.points} pts`
+      ]));
+      progressEl.appendChild(el("div", { style:"height:10px" }));
+      progressEl.appendChild(progressBar(info.progress));
+    }
+
+    const grid = $("#levelsGrid");
+    if (grid){
+      grid.innerHTML = "";
+      for (const row of levels){
+        const isUnlocked = p.points >= row.requiredTotal;
+        const isCurrent = row.level === info.current;
+
+        const reward = row.reward ? row.reward : "—";
+        const cls = [
+          "level",
+          isUnlocked ? "unlocked" : "lock",
+          isCurrent ? "current" : ""
+        ].join(" ").trim();
+
+        grid.appendChild(el("div", { class: cls }, [
+          el("div", { class:"level-top" }, [
+            el("div", {}, [
+              el("div", { class:"level-num" }, [`Nivel ${row.level}`]),
+              el("div", { class:"level-points" }, [`Requiere: ${row.requiredTotal} pts`]),
+            ]),
+            el("span", { class:"badge" }, [isUnlocked ? "Desbloqueado" : "Bloqueado"])
+          ]),
+          el("div", { class:"level-reward" }, [
+  el("span", { class:"badge reward-badge" }, ["Recompensa"]),
+  el("span", { class:"reward-text" }, [reward])
+])
+        ]));
+      }
+    }
+  }
+}
+
+/* ---------- EVENTS ---------- */
+
+function initEvents(){
+  const { events } = DATA;
+  const list = $("#eventsList");
+  const input = $("#eventSearch");
+
+  const sorted = events
+    .slice()
+    .sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));
+
+  const render = (q="") => {
+    const qn = q.trim().toLowerCase();
+    const filtered = !qn ? sorted : sorted.filter(e =>
+      (e.type + " " + e.club + " " + e.location + " " + e.datetime).toLowerCase().includes(qn)
+    );
+
+    list.innerHTML = "";
+    filtered.forEach(e => list.appendChild(eventItem(e)));
+    if (!filtered.length){
+      list.appendChild(el("div", { class:"muted" }, ["No hay eventos que coincidan."]));
+    }
+  };
+
+  render("");
+  if (input) input.addEventListener("input", () => render(input.value));
+}
+
+function eventItem(e){
+  return el("div", { class:"item" }, [
+    el("div", { class:"item-left" }, [
+      el("div", { class:"item-title" }, [`${e.type} · ${e.title}`]),
+      el("div", { class:"item-sub" }, [`${formatDateTime(e.datetime)} · ${e.club} · ${e.location}`]),
+    ]),
+    el("div", { class:"item-right" }, [
+      el("span", { class:"badge" }, [`${e.price_eur}€`]),
+      el("span", { class:"muted small" }, [`Plazas: ${e.spots_left}/${e.spots_total}`]),
+    ])
+  ]);
+}
+
+/* ---------- PLAYERS ---------- */
+
+function initPlayers(){
+    const { levels } = DATA;
+ const players = DATA.players || [];
+
+  const tbody = $("#playersTable tbody");
+  const search = $("#playerSearch");
+  const sort = $("#sortPlayers");
+
+  const compute = (p) => {
+    const lvl = pointsToLevel(levels, p.points);
+    const wr = winrate(p);
+    const matches = (p.wins||0)+(p.losses||0);
+    return { ...p, lvl, wr, matches };
+  };
+
+  const base = players.map(compute);
+
+  const sorters = {
+    points_desc: (a,b)=> b.points - a.points,
+    level_desc: (a,b)=> b.lvl - a.lvl || b.points - a.points,
+    winrate_desc: (a,b)=> b.wr - a.wr || b.points - a.points,
+    matches_desc: (a,b)=> b.matches - a.matches || b.points - a.points
+  };
+
+  const render = () => {
+    const q = (search?.value || "").trim().toLowerCase();
+    const s = sort?.value || "points_desc";
+
+    let rows = base.slice();
+    if (q){
+      rows = rows.filter(p => (p.name + " " + (p.club||"")).toLowerCase().includes(q));
+    }
+    rows.sort(sorters[s]);
+
+    tbody.innerHTML = "";
+    rows.forEach((p, idx) => {
+      const tr = el("tr", {}, [
+        el("td", {}, [String(idx+1)]),
+        el("td", {}, [playerLink(p)]),
+        el("td", {}, [String(p.lvl)]),
+        el("td", {}, [String(p.points)]),
+        el("td", {}, [`${p.wins}-${p.losses}`]),
+        el("td", {}, [`${p.wr.toFixed(1)}%`]),
+        el("td", {}, [p.club || "—"]),
+      ]);
+      tbody.appendChild(tr);
+    });
+  };
+
+  render();
+  search?.addEventListener("input", render);
+  sort?.addEventListener("change", render);
+}
+
+function playerLink(p){
+  const a = el("a", { class:"link", href:`player.html?id=${encodeURIComponent(p.id)}` }, [p.name]);
+  return a;
+}
+
+/* ---------- PLAYER PROFILE ---------- */
+
+function initPlayerProfile(){
+    const { levels, matches, config } = DATA;
+  const players = DATA.players || [];
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id") || players[0]?.id;
+  const p = players.find(x => x.id === id) || players[0];
+
+  const head = $("#playerHead");
+  const lvlInfo = nextLevelInfo(levels, p.points);
+
+  if (head){
+    head.innerHTML = "";
+    head.appendChild(el("div", {}, [
+      el("h1", {}, [p.name]),
+      el("p", { class:"muted" }, [`Club: ${p.club || "—"} · Nivel ${lvlInfo.current} · ${p.points} pts`]),
+    ]));
+    head.appendChild(el("div", { class:"page-actions" }, [
+      el("a", { class:"btn ghost", href:"players.html" }, ["← Volver a jugadores"]),
+      el("a", { class:"btn", href:"pass.html" }, ["Ver pase"]),
+    ]));
+  }
+
+  const prog = $("#playerProgress");
+  if (prog){
+    prog.innerHTML = "";
+    prog.appendChild(el("div", { class:"muted small" }, [
+      lvlInfo.isMax
+        ? "Máximo nivel alcanzado."
+        : `Siguiente nivel: ${lvlInfo.current + 1} · Objetivo: ${lvlInfo.nextTarget} pts · Te faltan ${lvlInfo.nextTarget - p.points} pts`
+    ]));
+    prog.appendChild(el("div", { style:"height:10px" }));
+    prog.appendChild(progressBar(lvlInfo.progress));
+    prog.appendChild(el("div", { style:"height:14px" }));
+    prog.appendChild(el("div", { class:"kpi-row" }, [
+      kpi("VICTORIAS", String(p.wins)),
+      kpi("DERROTAS", String(p.losses)),
+      kpi("WINRATE", `${winrate(p).toFixed(1)}%`),
+    ]));
+  }
+
+  const stats = $("#playerStats");
+  if (stats){
+    const total = (p.wins||0)+(p.losses||0);
+    stats.innerHTML = "";
+    stats.appendChild(el("div", { class:"kpi-row" }, [
+      kpi("PARTIDOS", String(total)),
+      kpi("RACHA (demo)", p.streak || "—"),
+      kpi("MEJOR RESULTADO (demo)", p.best || "—"),
+    ]));
+  }
+
+  const missions = $("#playerMissions");
+  if (missions){
+    missions.innerHTML = "";
+    // demo: marca completadas según flags del player
+    for (const m of config.monthlyMissions){
+      const done = !!(p.monthlyDone || []).includes(m.id);
+      missions.appendChild(missionCard(m, done));
+    }
+  }
+     // LOGROS (10 huecos) + 1 medalla en Robert
+  const ag = $("#achievementsGrid");
+  if (ag){
+    ag.innerHTML = "";
+    const isRobert = String(p.id).toLowerCase() === "robert" || String(p.name).toLowerCase().includes("robert");
+
+    for (let i = 0; i < 10; i++){
+      const slot = el("div", { class: "achievement-slot" });
+      if (isRobert && i === 0){
+        slot.classList.add("filled");
+        slot.textContent = "🌞";
+      }
+      ag.appendChild(slot);
+    }
+  }
+
+  const list = $("#playerMatches");
+  if (list){
+    const recent = matches
+      .filter(x => x.players.includes(p.id))
+      .slice()
+      .sort((a,b)=> new Date(b.datetime) - new Date(a.datetime))
+      .slice(0, 8);
+
+    list.innerHTML = "";
+    for (const m of recent){
+      const isWin = m.winner === p.id;
+      list.appendChild(el("div", { class:"item" }, [
+        el("div", { class:"item-left" }, [
+          el("div", { class:"item-title" }, [
+            `${isWin ? "Victoria" : "Derrota"} · ${m.score} · ${m.type}`
+          ]),
+          el("div", { class:"item-sub" }, [
+            `${formatDateTime(m.datetime)} · ${m.club} · vs ${opponentsLabel(m, p.id)}`
+          ]),
+        ]),
+        el("div", { class:"item-right" }, [
+          el("span", { class:"badge" }, [`${m.pointsEarned[p.id] || 0} pts`]),
+          el("span", { class:"muted small" }, [m.note || ""])
+        ])
+      ]));
+    }
+    if (!recent.length){
+      list.appendChild(el("div", { class:"muted" }, ["Aún no hay partidos registrados para este jugador."]));
+    }
+  }
+}
+
+function opponentsLabel(match, pid){
+  const ids = match.players.filter(x => x !== pid);
+  const names = ids.map(id => (DATA.players.find(p => p.id === id)?.name || id));
+  return names.join(", ");
+}
+
+function kpi(k, v){
+  return el("div", { class:"kpi" }, [
+    el("div", { class:"k" }, [k]),
+    el("div", { class:"v" }, [v]),
+  ]);
+}
+
+function missionCard(m, done){
+  return el("div", { class:"mission" }, [
+    el("h3", {}, [m.title]),
+    el("div", { class:"muted small" }, [m.desc]),
+    el("div", { style:"height:10px" }),
+    el("div", { class:"meta" }, [
+      el("span", {}, [`+${m.points} pts`]),
+      el("span", { class: done ? "done" : "" }, [done ? "Completado" : "Pendiente"]),
+    ])
+  ]);
+}
+/* ---------- LOCAL PLAYERS (registro sin backend) ---------- */
+
+const LS_PLAYERS_KEY = "pp_local_players_v1";
+
+function getLocalPlayers(){
+  try { return JSON.parse(localStorage.getItem(LS_PLAYERS_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function setLocalPlayers(list){
+  localStorage.setItem(LS_PLAYERS_KEY, JSON.stringify(list));
+}
+
+function slugifyId(name){
+  const base = String(name || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const rand = Math.random().toString(36).slice(2, 6);
+  return base ? `${base}-${rand}` : `player-${rand}`;
+}
+
+
+
+/* ---------- REGISTER ---------- */
+
+async function initRegister(){
+  // genera preview ID según nombre
   const form = $("#registerForm");
-  const out = $("#registerOut");
-  if (!form || !out) return;
+  const msg = $("#registerMsg");
+  const idPreview = form?.querySelector('input[name="idPreview"]');
+  const nameInput = form?.querySelector('input[name="name"]');
 
-  form.addEventListener("submit", async (e) => {
+  const updatePreview = () => {
+    if (!idPreview) return;
+    const name = nameInput?.value || "";
+    idPreview.value = name ? slugifyId(name).replace(/-[a-z0-9]{4}$/, "-xxxx") : "";
+  };
+
+  nameInput?.addEventListener("input", updatePreview);
+  updatePreview();
+
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = $("#name").value.trim();
-    const club = $("#club").value.trim();
-    const handle = $("#handle").value.trim();
+    const fd = new FormData(form);
+    const name = String(fd.get("name") || "").trim();
+    const club = String(fd.get("club") || "").trim();
+    const contact = String(fd.get("contact") || "").trim();
 
-    if (!name) {
-      out.innerHTML = `<span class="badge bad"><span class="dot"></span>Nombre requerido</span>`;
+    if (!name){
+      if (msg) msg.textContent = "❌ El nombre es obligatorio.";
       return;
     }
 
-    // Demo: guarda en Firestore (colección registrations)
-    const id = `${Date.now()}`;
-    await setDoc(doc(db, "registrations", id), {
+    const id = slugifyId(name);
+
+    // estructura compatible con tu app
+    const newPlayer = {
       id,
       name,
-      club,
-      handle,
-      createdAt: new Date().toISOString(),
-    });
+      club: club || "",
+      contact: contact || "",
+      points: 0,
+      wins: 0,
+      losses: 0,
+      monthlyDone: []
+    };
 
-    out.innerHTML = `<span class="badge ok"><span class="dot"></span>Registrado</span>`;
+    try {
+  await ensureAuth();
+  await setDoc(doc(db, "players", newPlayer.id), newPlayer);
+  await loadAllData();
+  if (msg) msg.textContent = `✅ Jugador creado: ${name} (id: ${id}).`;
+} catch (err) {
+  console.error(err);
+  if (msg) msg.textContent = `❌ Error guardando en Firebase: ${err?.code || err?.message || err}`;
+}
+
+    // limpiar campos (menos idPreview)
     form.reset();
+    updatePreview();
+  });
+
+  $("#exportLocalPlayers")?.addEventListener("click", () => {
+    const locals = getLocalPlayers();
+    const blob = new Blob([JSON.stringify(locals, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "players_local_export.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $("#clearLocalPlayers")?.addEventListener("click", () => {
+    localStorage.removeItem(LS_PLAYERS_KEY);
+    if (msg) msg.textContent = "🗑️ Jugadores locales borrados.";
   });
 }
 
-// ADMIN
-async function initAdmin() {
-  const tableBody = $("#adminTableBody");
-  const btnReload = $("#adminReload");
-  const btnClear = $("#adminClear");
-  const out = $("#adminOut");
-
-  if (!tableBody) return;
-
-  const load = async () => {
-    tableBody.innerHTML = `<tr><td colspan="5">Cargando...</td></tr>`;
-    const snap = await getDocs(collection(db, "registrations"));
-    const rows = snap.docs.map((d) => d.data()).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-
-    if (!rows.length) {
-      tableBody.innerHTML = `<tr><td colspan="5">Sin registros</td></tr>`;
-      return;
-    }
-
-    tableBody.innerHTML = rows
-      .map(
-        (r) => `
-        <tr>
-          <td><b>${r.name || "—"}</b></td>
-          <td>${r.handle || "—"}</td>
-          <td>${r.club || "—"}</td>
-          <td>${fmt.date(r.createdAt || new Date().toISOString())}</td>
-          <td>
-            <button class="btn ghost" data-del="${r.id}">Borrar</button>
-          </td>
-        </tr>
-      `
-      )
-      .join("");
-
-    $$("button[data-del]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        const id = b.dataset.del;
-        await deleteDoc(doc(db, "registrations", id));
-        if (out)
-          out.innerHTML = `<span class="badge warn"><span class="dot"></span>Registro eliminado</span>`;
-        load();
-      })
-    );
-  };
-
-  if (btnReload) btnReload.addEventListener("click", load);
-
-  if (btnClear)
-    btnClear.addEventListener("click", async () => {
-      const snap = await getDocs(collection(db, "registrations"));
-      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
-      if (out)
-        out.innerHTML = `<span class="badge warn"><span class="dot"></span>Todo eliminado</span>`;
-      load();
-    });
-
-  await load();
+async function fetchPlayersFromFirestore(){
+  const snap = await getDocs(collection(db, "players"));
+  const out = [];
+  snap.forEach(d => out.push(d.data()));
+  return out;
 }
