@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Padel Pass — Jugadores</title>
   <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#0b1020" />
 </head>
 <body>
   <header class="topbar">
@@ -13,68 +14,30 @@
       <span>Padel Pass</span>
     </a>
 
-    <nav class="nav">
+    <nav class="nav" id="siteNav">
       <a class="navlink" href="index.html">Inicio</a>
       <a class="navlink" href="pass.html">Pase</a>
       <a class="navlink" href="events.html">Eventos</a>
       <a class="navlink active" href="players.html">Jugadores</a>
       <a class="navlink" href="register.html">Registro</a>
-      <a class="navlink" href="register.html">Registro</a>
     </nav>
 
     <div class="topbar-actions">
+      <button class="btn ghost nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-controls="siteNav" aria-expanded="false">☰</button>
       <button class="btn ghost" id="themeToggle" type="button">Modo</button>
     </div>
   </header>
+  <div class="nav-backdrop" id="navBackdrop" hidden></div>
 
-  <main class="container">
-    <section class="page-head">
-      <div>
-        <h1>Jugadores</h1>
-        <p class="muted">Perfiles con nivel, puntos y estadísticas</p>
-      </div>
-      <div class="page-actions">
-        <input class="input" id="playerSearch" placeholder="Buscar jugador..." />
-        <select class="input" id="sortPlayers">
-          <option value="points_desc">Orden: Puntos (desc)</option>
-          <option value="level_desc">Orden: Nivel (desc)</option>
-          <option value="winrate_desc">Orden: Winrate (desc)</option>
-          <option value="matches_desc">Orden: Partidos (desc)</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-body">
-        <div class="table-wrap">
-          <table class="table" id="playersTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Jugador</th>
-                <th>Nivel</th>
-                <th>Puntos</th>
-                <th>W-L</th>
-                <th>Winrate</th>
-                <th>Club</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
+  <main id="app"></main>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    <div class="wrap">
+      © <span id="year"></span> Padel Pass · MVP
     </div>
   </footer>
 
-  <script>
-  window.PADEL_PAGE = "players";
-</script>
-<script type="module" src="app.js"></script>
+  <script>window.PADEL_PAGE="players"</script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
