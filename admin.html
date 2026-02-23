@@ -1,4 +1,3 @@
-<!-- admin.html -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -6,68 +5,98 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Padel Pass — Admin</title>
   <link rel="stylesheet" href="styles.css" />
-  <meta name="theme-color" content="#0b1020" />
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="index.html">
-      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+      <img src="assets/logo.png" alt="Padel Pass" class="logo" />
       <span>Padel Pass</span>
     </a>
 
-    <nav class="nav" id="siteNav">
+    <nav class="nav">
       <a class="navlink" href="index.html">Inicio</a>
-      <a class="navlink" href="pass.html">Pase</a>
-      <a class="navlink" href="events.html">Eventos</a>
       <a class="navlink" href="players.html">Jugadores</a>
-      <a class="navlink" href="register.html">Registro</a>
+      <a class="navlink active" href="admin.html">Admin</a>
     </nav>
 
     <div class="topbar-actions">
-      <button class="btn ghost nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-controls="siteNav" aria-expanded="false">☰</button>
       <button class="btn ghost" id="themeToggle" type="button">Modo</button>
     </div>
   </header>
-  <div class="nav-backdrop" id="navBackdrop" hidden></div>
 
-  <main class="wrap section">
-    <div class="card">
-      <div class="hd">
-        <b>Admin (registros)</b>
-        <div class="help">Lectura y borrado de registros en Firestore (demo)</div>
+  <main class="container">
+    <section class="page-head">
+      <div>
+        <h1>Admin jugadores</h1>
+        <p class="muted">Editar y borrar jugadores en Firestore.</p>
       </div>
-      <div class="bd">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <button class="btn" id="adminReload" type="button">Recargar</button>
-          <button class="btn ghost" id="adminClear" type="button">Borrar todo</button>
-          <div id="adminOut"></div>
-        </div>
+    </section>
 
+    <section class="card">
+      <div class="card-header">
+        <h2>Clave admin</h2>
+        <p class="muted small">Necesaria para editar/borrar.</p>
+      </div>
+      <div class="card-body">
+        <input class="input" id="adminKeyInput" placeholder="PP_ADMIN_2026" />
+        <div class="muted small" style="margin-top:10px" id="adminMsg"></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <div class="card-header">
+        <h2>Jugadores</h2>
+        <p class="muted small">Click en “Editar” para cargar el formulario.</p>
+      </div>
+      <div class="card-body">
         <div class="table-wrap">
-          <table class="table">
+          <table class="table" id="adminPlayersTable">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Handle</th>
-                <th>Club</th>
-                <th>Fecha</th>
-                <th></th>
+                <th>Nombre</th><th>ID</th><th>Puntos</th><th>W-L</th><th>Acciones</th>
               </tr>
             </thead>
-            <tbody id="adminTableBody"></tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>
-    </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <div class="card-header">
+        <h2>Editar jugador</h2>
+        <p class="muted small">Solo guarda en Firestore.</p>
+      </div>
+      <div class="card-body">
+        <form id="adminEditForm" class="form-grid">
+          <input class="input" name="id" placeholder="id" readonly />
+          <input class="input" name="name" placeholder="Nombre" required />
+          <input class="input" name="club" placeholder="Club" />
+          <input class="input" name="contact" placeholder="Contacto" />
+          <input class="input" name="points" placeholder="Puntos" type="number" min="0" />
+          <input class="input" name="wins" placeholder="Victorias" type="number" min="0" />
+          <input class="input" name="losses" placeholder="Derrotas" type="number" min="0" />
+
+          <div style="grid-column:1/-1; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" type="submit">Guardar cambios</button>
+            <button class="btn ghost" id="adminReload" type="button">Recargar</button>
+          </div>
+
+          <div class="muted small" id="adminEditMsg" style="grid-column:1/-1;"></div>
+        </form>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
-    <div class="wrap">
-      © <span id="year"></span> Padel Pass · MVP
+    <div class="container footer-inner">
+      <span class="muted small">© <span id="year"></span> Padel Pass</span>
     </div>
   </footer>
 
-  <script>window.PADEL_PAGE="admin"</script>
+  <script>
+    window.PADEL_PAGE = "admin";
+  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
