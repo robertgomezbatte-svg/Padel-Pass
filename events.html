@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Padel Pass — Eventos</title>
   <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#0b1020" />
 </head>
 <body>
   <header class="topbar">
@@ -13,7 +14,7 @@
       <span>Padel Pass</span>
     </a>
 
-    <nav class="nav">
+    <nav class="nav" id="siteNav">
       <a class="navlink" href="index.html">Inicio</a>
       <a class="navlink" href="pass.html">Pase</a>
       <a class="navlink active" href="events.html">Eventos</a>
@@ -22,37 +23,21 @@
     </nav>
 
     <div class="topbar-actions">
+      <button class="btn ghost nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-controls="siteNav" aria-expanded="false">☰</button>
       <button class="btn ghost" id="themeToggle" type="button">Modo</button>
     </div>
   </header>
+  <div class="nav-backdrop" id="navBackdrop" hidden></div>
 
-  <main class="container">
-    <section class="page-head">
-      <div>
-        <h1>Eventos</h1>
-        <p class="muted">Americanas y partidos organizados · Pago por evento</p>
-      </div>
-      <div class="page-actions">
-        <input class="input" id="eventSearch" placeholder="Buscar por club, tipo, fecha..." />
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-body">
-        <div class="list" id="eventsList"></div>
-      </div>
-    </section>
-  </main>
+  <main id="app"></main>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    <div class="wrap">
+      © <span id="year"></span> Padel Pass · MVP
     </div>
   </footer>
 
-  <script>
-  window.PADEL_PAGE = "events";
-</script>
-<script type="module" src="app.js"></script>
+  <script>window.PADEL_PAGE="events"</script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
