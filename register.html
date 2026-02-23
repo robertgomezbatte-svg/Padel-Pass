@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Padel Pass — Registro</title>
   <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#0b1020" />
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="index.html">
-      <img src="assets/logo.png" alt="Padel Pass" class="logo" />
+      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
       <span>Padel Pass</span>
     </a>
 
-    <nav class="nav">
+    <nav class="nav" id="siteNav">
       <a class="navlink" href="index.html">Inicio</a>
       <a class="navlink" href="pass.html">Pase</a>
       <a class="navlink" href="events.html">Eventos</a>
@@ -22,70 +23,47 @@
     </nav>
 
     <div class="topbar-actions">
+      <button class="btn ghost nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-controls="siteNav" aria-expanded="false">☰</button>
       <button class="btn ghost" id="themeToggle" type="button">Modo</button>
     </div>
   </header>
+  <div class="nav-backdrop" id="navBackdrop" hidden></div>
 
-  <main class="container">
-    <section class="page-head">
-      <div>
-        <h1>Registro de jugador</h1>
-        <p class="muted">Se guarda en este dispositivo (demo). Luego podrás exportarlo a JSON.</p>
+  <main class="wrap section">
+    <div class="card">
+      <div class="hd">
+        <b>Registro (demo)</b>
+        <div class="help">Guarda registros en Firestore (anónimo)</div>
       </div>
-      <div class="page-actions">
-        <a class="btn ghost" href="players.html">Ver jugadores →</a>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-header">
-        <h2>Datos</h2>
-        <p class="muted small">Nombre obligatorio. El resto opcional.</p>
-      </div>
-
-      <div class="card-body">
-        <form id="registerForm" class="form-grid">
-          <div>
-            <div class="muted small">Nombre*</div>
-            <input class="input" name="name" required maxlength="40" placeholder="Ej: Robert" />
+      <div class="bd">
+        <form id="registerForm">
+          <div class="field">
+            <label for="name">Nombre</label>
+            <input id="name" name="name" placeholder="Tu nombre" />
+          </div>
+          <div class="field">
+            <label for="handle">Handle (opcional)</label>
+            <input id="handle" name="handle" placeholder="@nick" />
+          </div>
+          <div class="field">
+            <label for="club">Club (opcional)</label>
+            <input id="club" name="club" placeholder="Club" />
           </div>
 
-          <div>
-            <div class="muted small">Club</div>
-            <input class="input" name="club" maxlength="40" placeholder="Ej: Can Bassa" />
-          </div>
-
-          <div>
-            <div class="muted small">Contacto (opcional)</div>
-            <input class="input" name="contact" maxlength="60" placeholder="Instagram / WhatsApp / email" />
-          </div>
-
-          <div>
-            <div class="muted small">ID (auto)</div>
-            <input class="input" name="idPreview" readonly />
-          </div>
-
-          <div style="grid-column: 1 / -1; display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-            <button class="btn" type="submit">Crear jugador</button>
-            <button class="btn ghost" id="exportLocalPlayers" type="button">Exportar jugadores (JSON)</button>
-            <button class="btn ghost" id="clearLocalPlayers" type="button">Borrar jugadores locales</button>
-          </div>
-
-          <div class="muted small" id="registerMsg" style="grid-column:1/-1;"></div>
+          <button class="btn primary" type="submit">Registrar</button>
         </form>
+
+        <div id="registerOut" style="margin-top:12px"></div>
       </div>
-    </section>
+    </div>
   </main>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <span class="muted small">© <span id="year"></span> Padel Pass</span>
+    <div class="wrap">
+      © <span id="year"></span> Padel Pass · MVP
     </div>
   </footer>
 
-  <script>
-  window.PADEL_PAGE = "register";
-</script>
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
