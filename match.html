@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Nueva partida</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+      <span>Padel Pass</span>
+    </a>
+
+    <nav class="nav">
+      <a class="navlink" href="index.html">Inicio</a>
+      <a class="navlink" href="pass.html">Pase</a>
+      <a class="navlink" href="events.html">Eventos</a>
+      <a class="navlink" href="players.html">Jugadores</a>
+      <a class="navlink active" href="match.html">Partida</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="page-head">
+      <div>
+        <h1>Nueva partida</h1>
+        <p class="muted">Selecciona los 4 jugadores</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-body">
+
+        <form id="createMatchForm" class="form-grid">
+
+          <select class="input" name="p1" required></select>
+          <select class="input" name="p2" required></select>
+          <select class="input" name="p3" required></select>
+          <select class="input" name="p4" required></select>
+
+          <div style="grid-column:1/-1; margin-top:10px;">
+            <button class="btn" type="submit">Crear partida →</button>
+          </div>
+
+        </form>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  window.PADEL_PAGE = "match";
+  </script>
+
+  <script type="module">
+    const form = document.getElementById("createMatchForm");
+
+    async function loadPlayers(){
+      const res = await fetch("players.json");
+      const basePlayers = await res.json();
+      const local = JSON.parse(localStorage.getItem("pp_players_extra") || "[]");
+      return [...basePlayers, ...local];
+    }
+
+    loadPlayers().then(players=>{
+      const selects = form.querySelectorAll("select");
+      selects.forEach(select=>{
+        select.innerHTML = '<option value="">Jugador</option>';
+        players.forEach(p=>{
+          select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+      });
+    });
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+
+      const data = new FormData(form);
+      const players = [data.get("p1"), data.get("p2"), data.get("p3"), data.get("p4")];
+
+      localStorage.setItem("pp_current_match", JSON.stringify({
+        id: "m" + Date.now(),
+        players
+      }));
+
+      location.href = "confirm.html";
+    });
+  </script>
+
+</body>
+</html>
