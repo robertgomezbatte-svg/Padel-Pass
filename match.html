@@ -1,99 +1,138 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Padel Pass — Nueva partida</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Padel Pass — Partida</title>
+<link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">
-      <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
-      <span>Padel Pass</span>
-    </a>
 
-    <nav class="nav">
-      <a class="navlink" href="index.html">Inicio</a>
-      <a class="navlink" href="pass.html">Pase</a>
-      <a class="navlink" href="events.html">Eventos</a>
-      <a class="navlink" href="players.html">Jugadores</a>
-      <a class="navlink active" href="match.html">Partida</a>
-    </nav>
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="assets/logo.svg" class="logo"/>
+    <span>Padel Pass</span>
+  </a>
 
-    <div class="topbar-actions">
-      <button class="btn ghost" id="themeToggle" type="button">Modo</button>
-    </div>
-  </header>
+  <nav class="nav">
+    <a class="navlink" href="index.html">Inicio</a>
+    <a class="navlink active" href="match.html">Partida</a>
+    <a class="navlink" href="players.html">Jugadores</a>
+  </nav>
+</header>
 
-  <main class="container">
+<main class="container">
 
-    <section class="page-head">
-      <div>
-        <h1>Nueva partida</h1>
-        <p class="muted">Selecciona los 4 jugadores</p>
-      </div>
-    </section>
+<section class="page-head">
+  <div>
+    <h1>Crear partida</h1>
+    <p class="muted">Selecciona los 4 jugadores y genera el código</p>
+  </div>
+</section>
 
-    <section class="card">
-      <div class="card-body">
+<section class="card glow">
+<div class="card-body">
 
-        <form id="createMatchForm" class="form-grid">
+<form id="matchForm" class="form-grid">
 
-          <select class="input" name="p1" required></select>
-          <select class="input" name="p2" required></select>
-          <select class="input" name="p3" required></select>
-          <select class="input" name="p4" required></select>
+<select class="input" name="p1" required></select>
+<select class="input" name="p2" required></select>
+<select class="input" name="p3" required></select>
+<select class="input" name="p4" required></select>
 
-          <div style="grid-column:1/-1; margin-top:10px;">
-            <button class="btn" type="submit">Crear partida →</button>
-          </div>
+<div style="grid-column:1/-1;text-align:center;margin-top:10px;">
+<button class="btn" type="submit">Generar partida</button>
+</div>
 
-        </form>
+</form>
 
-      </div>
-    </section>
+</div>
+</section>
 
-  </main>
+<section class="card" style="margin-top:20px;display:none;" id="generatedSection">
+<div class="card-body" style="text-align:center">
 
-  <script>
-  window.PADEL_PAGE = "match";
-  </script>
+<h2>Código de partida</h2>
+<div id="matchCode" style="font-size:28px;font-weight:900;margin:15px 0;"></div>
 
-  <script type="module">
-    const form = document.getElementById("createMatchForm");
+<canvas id="qrCanvas" width="220" height="220" style="border-radius:16px;"></canvas>
 
-    async function loadPlayers(){
-      const res = await fetch("players.json");
-      const basePlayers = await res.json();
-      const local = JSON.parse(localStorage.getItem("pp_players_extra") || "[]");
-      return [...basePlayers, ...local];
-    }
+<div style="margin-top:20px;">
+<button class="btn" onclick="location.href='confirm.html'">
+Confirmar resultado →
+</button>
+</div>
 
-    loadPlayers().then(players=>{
-      const selects = form.querySelectorAll("select");
-      selects.forEach(select=>{
-        select.innerHTML = '<option value="">Jugador</option>';
-        players.forEach(p=>{
-          select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        });
-      });
+</div>
+</section>
+
+</main>
+
+<script>
+window.PADEL_PAGE="match";
+</script>
+
+<script type="module">
+
+async function getPlayers(){
+  const res = await fetch("./players.json");
+  const base = await res.json();
+  const local = JSON.parse(localStorage.getItem("pp_players_extra")||"[]");
+  return [...base,...local];
+}
+
+const form = document.getElementById("matchForm");
+
+getPlayers().then(players=>{
+  form.querySelectorAll("select").forEach(select=>{
+    select.innerHTML='<option value="">Jugador</option>';
+    players.forEach(p=>{
+      select.innerHTML+=`<option value="${p.id}">${p.name}</option>`;
     });
+  });
+});
 
-    form.addEventListener("submit", function(e){
-      e.preventDefault();
+form.addEventListener("submit", e=>{
+  e.preventDefault();
+  const data=new FormData(form);
 
-      const data = new FormData(form);
-      const players = [data.get("p1"), data.get("p2"), data.get("p3"), data.get("p4")];
+  const players=[
+    data.get("p1"),
+    data.get("p2"),
+    data.get("p3"),
+    data.get("p4")
+  ];
 
-      localStorage.setItem("pp_current_match", JSON.stringify({
-        id: "m" + Date.now(),
-        players
-      }));
+  const code=Math.random().toString(36).substring(2,8).toUpperCase();
 
-      location.href = "confirm.html";
-    });
-  </script>
+  localStorage.setItem("pp_current_match",JSON.stringify({
+    id:"m"+Date.now(),
+    code,
+    players
+  }));
+
+  document.getElementById("matchCode").innerText=code;
+  generateQR(code);
+  document.getElementById("generatedSection").style.display="block";
+});
+
+function generateQR(text){
+  const canvas=document.getElementById("qrCanvas");
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#fff";
+  ctx.fillRect(0,0,220,220);
+  ctx.fillStyle="#000";
+  for(let i=0;i<text.length;i++){
+    ctx.fillRect(
+      20+(i*30),
+      60,
+      20,
+      100
+    );
+  }
+}
+
+</script>
 
 </body>
 </html>
