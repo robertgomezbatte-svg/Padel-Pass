@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Padel Pass — Confirmar resultado</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <img src="assets/logo.svg" alt="Padel Pass" class="logo" />
+    <span>Padel Pass</span>
+  </a>
+
+  <nav class="nav">
+    <a class="navlink" href="index.html">Inicio</a>
+    <a class="navlink active" href="confirm.html">Confirmar</a>
+  </nav>
+</header>
+
+<main class="container">
+
+<section class="page-head">
+  <h1>Confirmar resultado</h1>
+</section>
+
+<section class="card">
+<div class="card-body">
+
+<form id="resultForm" class="form-grid">
+
+  <select class="input" name="winner" required>
+    <option value="">Ganador</option>
+    <option value="A">Pareja A</option>
+    <option value="B">Pareja B</option>
+  </select>
+
+  <input class="input" name="score" placeholder="Ej: 6-4 6-3" required />
+
+  <div style="grid-column:1/-1;">
+    <button class="btn" type="submit">Guardar resultado</button>
+  </div>
+
+  <div class="muted small" id="msg" style="grid-column:1/-1;"></div>
+
+</form>
+
+</div>
+</section>
+
+</main>
+
+<script>
+window.PADEL_PAGE = "confirm";
+</script>
+
+<script type="module">
+
+async function loadPlayers(){
+  const res = await fetch("players.json");
+  const basePlayers = await res.json();
+  const local = JSON.parse(localStorage.getItem("pp_players_extra") || "[]");
+  return [...basePlayers, ...local];
+}
+
+document.getElementById("resultForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const match = JSON.parse(localStorage.getItem("pp_current_match"));
+  if(!match) return;
+
+  const players = await loadPlayers();
+
+  const winnerSide = e.target.winner.value;
+  const score = e.target.score.value;
+
+  const [p1,p2,p3,p4] = match.players;
+
+  const teamA = [p1,p2];
+  const teamB = [p3,p4];
+
+  const winners = winnerSide === "A" ? teamA : teamB;
+  const losers = winnerSide === "A" ? teamB : teamA;
+
+  const updated = players.map(p=>{
+    if(winners.includes(p.id)){
+      p.points += 25;
+      p.wins += 1;
+    }
+    if(losers.includes(p.id)){
+      p.points += 10;
+      p.losses += 1;
+    }
+    return p;
+  });
+
+  localStorage.setItem("pp_players_extra", JSON.stringify(
+    updated.filter(p=>p.id.startsWith("local_"))
+  ));
+
+  const matches = JSON.parse(localStorage.getItem("pp_matches_extra") || "[]");
+
+  matches.push({
+    id: match.id,
+    type: "Partido",
+    datetime: new Date().toISOString(),
+    players: match.players,
+    winner: winners[0],
+    score,
+    pointsEarned: {},
+    note: ""
+  });
+
+  localStorage.setItem("pp_matches_extra", JSON.stringify(matches));
+  localStorage.removeItem("pp_current_match");
+
+  document.getElementById("msg").innerText = "Partido guardado y puntos actualizados";
+
+});
+
+</script>
+
+</body>
+</html>
